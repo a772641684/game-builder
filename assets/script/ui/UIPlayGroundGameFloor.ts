@@ -1,6 +1,9 @@
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
+import { LevelGenerator } from "../logic/LevelGenerator";
 import { Logger } from "../logic/Logger";
 import PrefabGameFloorItem from "../prefab/PrefabGameFloorItem";
+import UIGameHUD from "./UIGameHUD";
 import UISettlement from "./UISettlement";
 
 const { ccclass, property } = cc._decorator;
@@ -16,6 +19,7 @@ const { ccclass, property } = cc._decorator;
  *     - Ceiling (cc.PhysicsBoxCollider, cc.Sprite)
  *   - HUD (cc.Node)
  *     - ScoreLabel (cc.Label [文本: "0"])
+ *     - LevelHUD (添加挂载 UIGameHUD)
  *     - BtnBack (cc.Button)
  */
 @ccclass
@@ -32,21 +36,41 @@ export default class UIPlayGroundGameFloor extends cc.Component {
     @property({ type: UISettlement, tooltip: "节点路径: Settlement" })
     settlement: UISettlement = null;
 
+    @property(UIGameHUD)
+    levelHUD: UIGameHUD = null;
+
     private _isGameOver: boolean = false;
     private _score: number = 0;
     private _spawnTimer: number = 0;
     private _moveSpeed: number = 200;
+    private _baseSpawnInterval: number = 1.2;
 
     onLoad() {
         cc.director.getPhysicsManager().enabled = true;
-        Logger.getInstance().info("Floor", "进入下一百层游戏");
+        Logger.getInstance().info("Floor", "进入下一百层游戏 (难度系统已注入)");
 
         // 绑定输入
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
 
+        // 初始化难度
+        this._updateDifficulty();
+
         // 初始生成一些地面
         this._spawnFloor(0, -200);
         this._spawnFloor(0, -400);
+    }
+
+    private _updateDifficulty() {
+        // 虚拟等级: 每 10 分升一级
+        const virtualLevel = 1 + Math.floor(this._score / 10);
+        const params = DifficultyManager.instance.getParams("FLOOR", virtualLevel);
+
+        this._moveSpeed = 200 * params.speed;
+        this._baseSpawnInterval = 1.2 / params.density; // 密度越高，生成间隔越短
+
+        if (this.levelHUD) {
+            this.levelHUD.refresh();
+        }
     }
 
     private onKeyDown(event: cc.Event.EventKeyboard) {
@@ -67,15 +91,19 @@ export default class UIPlayGroundGameFloor extends cc.Component {
 
         // 生成逻辑
         this._spawnTimer += dt;
-        if (this._spawnTimer > 1.2) {
+        if (this._spawnTimer > this._baseSpawnInterval) {
             this._spawnTimer = 0;
-            this._spawnFloor(Math.floor(Math.random() * 4), -650);
+            const random = LevelGenerator.instance.getRandomSource("FLOOR", this._score);
+            this._spawnFloor(random.nextInt(0, 3), -650);
+
             this._score++;
             this.scoreLabel.string = this._score.toString();
-        }
 
-        // 角色限制：不能直接修改刚体节点的坐标，应用力或速度。
-        // 但这里平台向上移，角色如果不动会相对下坠。
+            // 每过一定分数同步难度
+            if (this._score % 10 === 0) {
+                this._updateDifficulty();
+            }
+        }
 
         // 平台向上移动 (修改 Kinematic 刚体速度)
         this.floorContainer.children.forEach((child) => {
@@ -84,9 +112,6 @@ export default class UIPlayGroundGameFloor extends cc.Component {
                 child.destroy();
             }
         });
-
-        // 速度随分数提升
-        this._moveSpeed = 200 + Math.floor(this._score / 10) * 15;
 
         // 检测掉落或顶死
         if (this.player.y < -680 || this.player.y > 580) {
@@ -97,7 +122,10 @@ export default class UIPlayGroundGameFloor extends cc.Component {
     private _spawnFloor(type: number, y: number) {
         let node = new cc.Node("Floor");
         node.parent = this.floorContainer;
-        node.position = cc.v3(Math.random() * 400 - 200, y, 0);
+
+        // 使用种子随机化位置 (T012)
+        const random = LevelGenerator.instance.getRandomSource("FLOOR_POS", this._score + y);
+        node.position = cc.v3(random.nextInt(-200, 200), y, 0);
 
         // 挂载显示组件
         let sprite = node.addComponent(cc.Sprite);

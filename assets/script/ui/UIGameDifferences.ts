@@ -1,4 +1,6 @@
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
+import { LevelGenerator } from "../logic/LevelGenerator";
 import { Logger } from "../logic/Logger";
 
 const { ccclass, property } = cc._decorator;
@@ -6,18 +8,7 @@ const { ccclass, property } = cc._decorator;
 /**
  * [Prefab 结构说明]
  * - UIGameDifferences (Root 挂载此脚本)
- *   - Background (Sprite)
- *   - GameLayer (Node)
- *     - LeftImage (Sprite)
- *     - RightImage (Sprite)
- *     - DiffContainer (Node)
- *       - Diff_0 (Node 挂载 DiffLogic)
- *       - Diff_1 (Node 挂载 DiffLogic)
- *       - Diff_2 (Node 挂载 DiffLogic)
- *   - UI_Overlay (Node)
- *     - BtnBack (Button)
- *     - TipLabel (Label)
- *     - FoundCountLabel (Label)
+...
  */
 @ccclass
 export default class UIGameDifferences extends cc.Component {
@@ -37,6 +28,12 @@ export default class UIGameDifferences extends cc.Component {
         this.btnBack.on("click", this.onBtnBackClick, this);
 
         this.node.on("diff-found", this.onDiffFound, this);
+
+        const level = DifficultyManager.instance.getCurrentLevel("DIFFERENCES");
+        const difficulty = DifficultyManager.instance.getParams("DIFFERENCES");
+        const config = LevelGenerator.instance.generateDiffConfig(level, difficulty);
+        this._totalCount = config.count;
+        this.foundCountLabel.string = `已找到: ${this._foundCount}/${this._totalCount}`;
     }
 
     private onDiffFound() {

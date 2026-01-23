@@ -41,7 +41,8 @@ export default class UIPlayGroundGamePoly extends cc.Component {
     private _initEvents() {
         this.anchorsContainer.children.forEach((anchor) => {
             anchor.on(cc.Node.EventType.TOUCH_MOVE, (event: cc.Event.EventTouch) => {
-                anchor.position = anchor.parent.convertToNodeSpaceAR(event.getLocation());
+                const pos = anchor.parent.convertToNodeSpaceAR(event.getLocation());
+                anchor.position = cc.v3(pos.x, pos.y, 0);
                 this._drawLines();
                 this._checkWin();
             });
@@ -73,7 +74,5 @@ export default class UIPlayGroundGamePoly extends cc.Component {
 
     public onBtnBackClicked() {
         GameCenter.instance.returnToHome();
-    }
-}
     }
 }

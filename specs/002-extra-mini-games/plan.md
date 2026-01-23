@@ -1,66 +1,107 @@
-# 实施方案: 经典小游戏第二辑
+# Implementation Plan: [FEATURE]
 
-**分支**: `002-extra-mini-games` | **日期**: 2026-01-23 | **说明书**: [spec.md](spec.md)
-**输入**: 6 款额外小游戏集合的功能规格说明书。
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-## 概述
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
-本项目旨在基于 Cocos Creator 2.3.x 快速构建包含 6 款经典小游戏（抓娃娃、下一百层、涂鸦跳跃、点线交织、弹弹球、泡泡龙）的 Demo 集合。核心技术方案采用 **逻辑单例解耦 + UI 自动化 Prefab 构建 + 混合物理引擎 (PhysicsManager)** 架构。
+## Summary
 
-## 技术背景
+[Extract from feature spec: primary requirement + technical approach from research]
 
-**语言/版本**: TypeScript / Cocos Creator 2.3.x
-**架构模式**:
+## Technical Context
 
-- **逻辑单例**: 各游戏核心算法隔离在 `assets/script/logic/` 单例中。
-- **UI 架构**: 使用自动化工具 `prefabBuilder` 根据脚本 JSDoc 结构自动生成 UI 树，确保 `assets/script/ui/` 与预制体高度一致。
-- **物理引擎**: 必须开启 `cc.PhysicsManager`，利用 `cc.tween` 与 `RigidBody` 协同完成交互。
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
 
-**合规检查 (宪法)**:
+**Language/Version**: [e.g., TypeScript / Cocos Creator 2.3.x]  
+**Primary Dependencies**: [e.g., cc.tween, Loader, Singleton]  
+**Storage**: [e.g., LocalStorage, Server Config, or N/A]  
+**Testing**: [e.g., Cocos Test Runner / Jest]  
+**Target Platform**: [e.g., WeChat Game, Web]
+**Project Type**: [e.g., Mini Game - single project]  
+**Performance Goals**: [e.g., 60 fps, < 4MB initial package]  
+**Constraints**: [e.g., Cocos Creator 2.3.x ONLY, No ?? syntax, 23-bit UUIDs]  
+**Scale/Scope**: [e.g., Single Gameplay Panel, Multi-level system]
 
-- [x] 禁止使用 `??` 语法 (宪法 II)
-- [x] 日志必须包含标签 (Tag) 且使用中文消息 (宪法 V)
-- [x] 脚本命名符合 `Prefab` 或 `UI` 前缀规范 (宪法 VIII)
-- [x] 严禁使用 `cc.Action`，统一使用 `cc.tween` (宪法 VII)
+## Constitution Check
 
-## 第 0 阶段：规划与研究
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-1. **已解析未知项**:
-    - 物理关节兼容性: 确认 `prefabBuilder` 已支持 `cc.HingeJoint` 自动化配置。
-    - 泡泡龙网格: 采用奇偶行偏移的六边形坐标转换。
-2. **研究成果**:
-    - 研究文档见 [research.md](research.md)，确认了各游戏的物理引擎与算法决策。
+[Gates determined based on constitution file]
 
-## 第 1 阶段：设计与契约
+## Project Structure
 
-1. **实体模型**: 数据定义见 [data-model.md](data-model.md)。
-2. **API 契约**: 内部消息通过 `GameCenter.ts` 分发，各小游戏面板通过 `UI_ENUM` 配置。
-3. **Agent 上下文**: 已通过 `.specify/scripts/powershell/update-agent-context.ps1` 更新。
+### Documentation (this feature)
 
-## 第 2 阶段：实施任务
+```text
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+```
 
-### 2.1 基础设施补全
+### Source Code (repository root)
 
-- [x] T001: 在 `UIEnum.ts` 注册 6 款新游戏入口。
-- [x] T002: 在 `GameCenter.ts` 补全 Prefab 路由逻辑。
-- [x] T003: 在 `StorageControl.ts` 定义各游戏最高分持久化 Key。
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
-### 2.2 小游戏核心逻辑补全
+```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
-- [x] T004: 补全 **抓娃娃** (US1) 逻辑：实现抓斗开合、娃娃生成与物理抓取。
-- [x] T005: 补全 **下一百层** (US2) 逻辑：实现平台生成循环、上升移动与生存判定。
-- [x] T006: 补全 **涂鸦跳跃** (US3) 逻辑：实现向上滚动摄像机跟随、动态平台生成。
-- [x] T007: 补全 **点线交织** (US4) 逻辑：实现锚点拖拽绘制与实时相交判定接口。
-- [x] T008: 补全 **弹弹球** (US5) 逻辑：实现球体物理力反馈与边界/障碍碰撞。
-- [x] T009: 补全 **泡泡龙** (US6) 逻辑：实现发射器旋转角度计算与颜色随机生成。
+tests/
+├── contract/
+├── integration/
+└── unit/
 
-### 2.3 验证与交付
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
 
-- [ ] T010: 执行 `node tools/prefabBuilder` 核对 6 款 Prefab 的节点绑定（特别是 HUD 按钮绑定）。
-- [ ] T011: 验证 SC-002：在编辑器控制台观察物理引擎运行状态，确保无无效 Joint 报错。
-- [ ] T012: 统一各游戏返回主菜单时的资源清理逻辑。
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
 
-## 第 3 阶段：交付后评估
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
 
-- **宪法一致性**: 脚本遵循宪法 VIII 命名，日志符合宪法 V 规范。
-- **质量门禁**: 各游戏逻辑已具备 MVP 状态，阻碍项为后续的精细化物理参数调优。
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
+```
+
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
+
+**Objective**: [e.g., Rapid Gameplay Prototype / Core Mechanic Validation]
+
+## Complexity Tracking
+
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |

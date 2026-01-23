@@ -1,6 +1,8 @@
 import { DEFAULT_GAME_CONFIG } from "../config/GameConfig";
 import MergeSystem from "../game/fruit/MergeSystem";
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
+import { LevelGenerator } from "../logic/LevelGenerator";
 import { Logger } from "../logic/Logger";
 
 const { ccclass, property } = cc._decorator;
@@ -41,21 +43,35 @@ export default class UIGameFruit extends cc.Component {
 
     private _currentScore: number = 0;
     private _nextLevel: number = 0;
+    private _difficultyScale: number = 1.0;
 
     protected onLoad() {
         Logger.getInstance().info("FruitGame", "硕果累累界面加载完成");
         this.btnBack.on("click", this.onBtnBackClick, this);
 
+        // [US1] 注入难度参数
+        const lv = DifficultyManager.instance.getCurrentLevel("FRUIT");
+        const params = DifficultyManager.instance.getParams("FRUIT");
+        this._difficultyScale = params.speed;
+
         // 初始化物理引擎
         const physicsManager = cc.director.getPhysicsManager();
         physicsManager.enabled = true;
-        physicsManager.gravity = cc.v2(0, -320 * DEFAULT_GAME_CONFIG.gravityScale);
+        // 随难度增加重力
+        physicsManager.gravity = cc.v2(0, -320 * DEFAULT_GAME_CONFIG.gravityScale * this._difficultyScale);
 
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
         this.node.on(cc.Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.onTouchEnd, this);
 
-        this._nextLevel = 0;
+        this.updateNextLevel();
+    }
+
+    private updateNextLevel() {
+        const lv = DifficultyManager.instance.getCurrentLevel("FRUIT");
+        const config = LevelGenerator.instance.getWatermelonConfig(lv);
+        // 基于 PCG 逻辑生成下一个水果
+        this._nextLevel = Math.floor(Math.random() * config.maxType);
     }
 
     private onTouchStart(event: cc.Event.EventTouch) {
@@ -67,9 +83,8 @@ export default class UIGameFruit extends cc.Component {
     }
 
     private onTouchEnd(event: cc.Event.EventTouch) {
-        this.spawnFruit(this._nextLevel, this.spawnPoint.position);
-        // 随机生成下一个水果等级 (0-2)
-        this._nextLevel = Math.floor(Math.random() * 3);
+        this.spawnFruit(this._nextLevel, cc.v2(this.spawnPoint.x, this.spawnPoint.y));
+        this.updateNextLevel();
     }
 
     private updateSpawnPosition(event: cc.Event.EventTouch) {

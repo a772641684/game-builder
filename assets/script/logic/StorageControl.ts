@@ -11,7 +11,15 @@ export class StorageControl extends Singleton<StorageControl> {
     public readonly EXTRA_GAME_UNLOCKS = "EXTRA_GAME_UNLOCKS";
 
     public static get instance(): StorageControl {
-        return super.instance as StorageControl;
+        if (!this._instance) {
+            this._instance = new StorageControl();
+            this._instance.init();
+        }
+        return this._instance;
+    }
+
+    public static getInstance(): StorageControl {
+        return this.instance;
     }
 
     /**
@@ -54,6 +62,36 @@ export class StorageControl extends Singleton<StorageControl> {
     private async syncToCloud(data: any): Promise<void> {
         // [TODO]: 这里后续对接真正的后端 API
         Logger.getInstance().info("Storage", "正在进行后端数据同步存根调用...");
+    }
+
+    /**
+     * 设置关卡进度
+     */
+    public setLevelProgress(gameId: string, level: number): void {
+        this.setNumber(`Level_${gameId}`, level);
+        Logger.getInstance().info("Storage", `保存游戏 ${gameId} 进度: 第 ${level} 关`);
+    }
+
+    /**
+     * 获取关卡进度
+     */
+    public getLevelProgress(gameId: string): number {
+        return this.getNumber(`Level_${gameId}`, 1);
+    }
+
+    /**
+     * 设置数值
+     */
+    public setNumber(key: string, val: number): void {
+        cc.sys.localStorage.setItem(key, val.toString());
+    }
+
+    /**
+     * 获取数值
+     */
+    public getNumber(key: string, defaultVal: number = 0): number {
+        const val = cc.sys.localStorage.getItem(key);
+        return val ? Number(val) : defaultVal;
     }
 
     public destroy(): void {

@@ -1,4 +1,6 @@
 import { DEFAULT_GAME_CONFIG } from "../../config/GameConfig";
+import { DifficultyManager } from "../../logic/DifficultyManager";
+import { LevelGenerator } from "../../logic/LevelGenerator";
 import { Logger } from "../../logic/Logger";
 
 const { ccclass, property } = cc._decorator;
@@ -14,6 +16,7 @@ export default class PuzzleLogic extends cc.Component {
 
     public isPlaced: boolean = false;
     private _startPos: cc.Vec2 = null;
+    private _snapDist: number = DEFAULT_GAME_CONFIG.snapDistance;
 
     onLoad() {
         this.node.on(cc.Node.EventType.TOUCH_START, this.onTouchStart, this);
@@ -22,6 +25,11 @@ export default class PuzzleLogic extends cc.Component {
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
 
         this._startPos = this.node.getPosition();
+
+        const level = DifficultyManager.instance.getCurrentLevel("PUZZLE");
+        const difficulty = DifficultyManager.instance.getParams("PUZZLE");
+        const config = LevelGenerator.instance.generatePuzzleConfig(level, difficulty);
+        this._snapDist = config.snapDist;
     }
 
     private onTouchStart() {
@@ -49,7 +57,7 @@ export default class PuzzleLogic extends cc.Component {
         const myWorldPos = this.node.convertToWorldSpaceAR(cc.Vec2.ZERO);
         const dist = slotWorldPos.sub(myWorldPos).mag();
 
-        if (dist < DEFAULT_GAME_CONFIG.snapDistance) {
+        if (dist < this._snapDist) {
             // 吸附成功
             const localPos = this.node.parent.convertToNodeSpaceAR(slotWorldPos);
             this.node.setPosition(localPos);

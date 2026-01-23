@@ -1,5 +1,6 @@
 import HorseLogic from "../game/horse/HorseLogic";
 import LineDrawer from "../game/horse/LineDrawer";
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
 import { Logger } from "../logic/Logger";
 
@@ -39,6 +40,15 @@ export default class UIGameHorse extends cc.Component {
     protected onLoad() {
         Logger.getInstance().info("HorseGame", "一马当先界面加载完成");
         this.btnBack.on("click", this.onBtnBackClick, this);
+
+        // [US1] 注入难度参数
+        const lv = DifficultyManager.instance.getCurrentLevel("HORSE");
+        const params = DifficultyManager.instance.getParams("HORSE");
+
+        // 调整马的速度或障碍物密度 (如果逻辑支持)
+        if (this.horseLogic) {
+            this.horseLogic.moveSpeed *= params.speed;
+        }
 
         // 绑定回调：画完线后马开始跑
         if (this.lineDrawer) {

@@ -1,5 +1,5 @@
+import { Singleton } from "../../ace/logic/Singleton";
 import { Logger } from "./Logger";
-import { Singleton } from "./Singleton";
 
 /**
  * 资源加载与实例化管理器
@@ -9,7 +9,11 @@ export class Loader extends Singleton<Loader> {
     private _loadedRes: Map<string, cc.Asset> = new Map();
 
     public static get instance(): Loader {
-        return super.instance as Loader;
+        if (!this._instance) {
+            this._instance = new Loader();
+            (this._instance as any).init();
+        }
+        return this._instance;
     }
 
     /**
@@ -36,7 +40,7 @@ export class Loader extends Singleton<Loader> {
             return;
         }
 
-        cc.resources.load(path, type, (err, res: T) => {
+        cc.loader.loadRes(path, type, (err, res: T) => {
             if (!err) {
                 this._loadedRes.set(path, res);
             }
@@ -51,9 +55,14 @@ export class Loader extends Singleton<Loader> {
     public releaseRes(path: string) {
         if (this._loadedRes.has(path)) {
             const res = this._loadedRes.get(path);
-            cc.resources.release(path);
+            cc.loader.releaseRes(path, (res as any).constructor);
             this._loadedRes.delete(path);
             Logger.getInstance().info("Loader", `资源已释放: ${path}`);
         }
+    }
+
+    public destroy(): void {
+        this._loadedRes.clear();
+        Loader._instance = null;
     }
 }

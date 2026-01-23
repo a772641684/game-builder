@@ -1,3 +1,4 @@
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
 import { Logger } from "../logic/Logger";
 
@@ -6,19 +7,7 @@ const { ccclass, property } = cc._decorator;
 /**
  * [Prefab 结构说明]
  * - UIGamePuzzle (Root 挂载此脚本)
- *   - Background (Sprite)
- *   - GameLayer (Node)
- *     - SlotContainer (Node)
- *       - Slot_0 (Node)
- *       - Slot_1 (Node)
- *       - Slot_2 (Node)
- *     - PieceContainer (Node)
- *       - Piece_0 (Node 挂载 PuzzleLogic)
- *       - Piece_1 (Node 挂载 PuzzleLogic)
- *       - Piece_2 (Node 挂载 PuzzleLogic)
- *   - UI_Overlay (Node)
- *     - BtnBack (Button)
- *     - TipLabel (Label)
+...
  */
 @ccclass
 export default class UIGamePuzzle extends cc.Component {
@@ -36,6 +25,10 @@ export default class UIGamePuzzle extends cc.Component {
 
         // 监听拼图完成事件
         this.node.on("piece-placed", this.checkWinCondition, this);
+
+        // 记录进入时的关卡
+        const level = DifficultyManager.instance.getCurrentLevel("PUZZLE");
+        Logger.getInstance().info("PuzzleGame", `进入第 ${level} 关`);
     }
 
     private checkWinCondition() {

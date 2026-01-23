@@ -22,8 +22,6 @@ export default class PhysicsInit extends cc.Component {
         if (this.debugDraw) {
             manager.debugDrawFlags =
                 cc.PhysicsManager.DrawBits.e_aabbBit |
-                cc.PhysicsManager.DrawBits.e_pairBit |
-                cc.PhysicsManager.DrawBits.e_centerOfMassBit |
                 cc.PhysicsManager.DrawBits.e_jointBit |
                 cc.PhysicsManager.DrawBits.e_shapeBit;
         }

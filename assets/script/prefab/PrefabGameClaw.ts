@@ -7,8 +7,8 @@ const { ccclass, property } = cc._decorator;
  * [Prefab 结构说明]
  * - ClawRoot (挂载此脚本, cc.PhysicsBoxCollider)
  *   - Rope (cc.Graphics)
- *   - Arm_L (cc.PhysicsBoxCollider, cc.HingeJoint)
- *   - Arm_R (cc.PhysicsBoxCollider, cc.HingeJoint)
+ *   - Arm_L (cc.PhysicsBoxCollider, cc.RevoluteJoint)
+ *   - Arm_R (cc.PhysicsBoxCollider, cc.RevoluteJoint)
  *   - Head (cc.Sprite)
  */
 @ccclass
@@ -37,10 +37,10 @@ export default class PrefabGameClaw extends cc.Component {
     private _setupJoints() {
         const rootBody = this.getComponent(cc.RigidBody);
 
-        const hingeL = this.armL.getComponent(cc.HingeJoint);
+        const hingeL = this.armL.getComponent(cc.RevoluteJoint);
         if (hingeL) hingeL.connectedBody = rootBody;
 
-        const hingeR = this.armR.getComponent(cc.HingeJoint);
+        const hingeR = this.armR.getComponent(cc.RevoluteJoint);
         if (hingeR) hingeR.connectedBody = rootBody;
     }
 

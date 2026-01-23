@@ -1,4 +1,7 @@
+import ConnectionChecker from "../game/pipe/ConnectionChecker";
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
+import { LevelGenerator } from "../logic/LevelGenerator";
 import { Logger } from "../logic/Logger";
 
 const { ccclass, property } = cc._decorator;
@@ -10,17 +13,7 @@ const { ccclass, property } = cc._decorator;
  *   - GameLayer (Node)
  *     - Grid (Layout)
  *       - Pipe_0_0 (Node 挂载 ConnectionChecker)
- *       - Pipe_0_1 (Node 挂载 ConnectionChecker)
- *       - Pipe_0_2 (Node 挂载 ConnectionChecker)
- *       - Pipe_1_0 (Node 挂载 ConnectionChecker)
- *       - Pipe_1_1 (Node 挂载 ConnectionChecker)
- *       - Pipe_1_2 (Node 挂载 ConnectionChecker)
- *       - Pipe_2_0 (Node 挂载 ConnectionChecker)
- *       - Pipe_2_1 (Node 挂载 ConnectionChecker)
- *       - Pipe_2_2 (Node 挂载 ConnectionChecker)
- *   - UI_Overlay (Node)
- *     - BtnBack (Button)
- *     - TipLabel (Label)
+ *       ...
  */
 @ccclass
 export default class UIGamePipe extends cc.Component {
@@ -28,11 +21,34 @@ export default class UIGamePipe extends cc.Component {
     @property(cc.Node)
     btnBack: cc.Node = null;
 
+    /** 节点路径: GameLayer/Grid */
+    @property(cc.Node)
+    grid: cc.Node = null;
+
     protected onLoad() {
         Logger.getInstance().info("PipeGame", "水管接通界面加载完成");
         this.btnBack.on("click", this.onBtnBackClick, this);
 
         this.node.on("pipe-rotated", this.checkConnectivity, this);
+
+        this.initLevel();
+    }
+
+    private initLevel() {
+        const level = DifficultyManager.instance.getCurrentLevel("PIPE");
+        const difficulty = DifficultyManager.instance.getParams("PIPE");
+        const layout = LevelGenerator.instance.generatePipeLayout(level, difficulty);
+
+        const checkers = this.grid.getComponentsInChildren(ConnectionChecker);
+        for (let i = 0; i < checkers.length && i < layout.length; i++) {
+            const angle = layout[i];
+            // 把随机的角度转化为旋转次数
+            const count = Math.floor(angle / 90) % 4;
+            // 直接设置组件内部变量和节点旋转
+            const checker = checkers[i] as any;
+            checker._currentRotationCount = count;
+            checker.node.angle = -count * 90;
+        }
     }
 
     private checkConnectivity() {

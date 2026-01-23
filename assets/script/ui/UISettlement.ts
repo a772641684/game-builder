@@ -1,3 +1,4 @@
+import { DifficultyManager } from "../logic/DifficultyManager";
 import { GameCenter } from "../logic/GameCenter";
 import { Logger } from "../logic/Logger";
 
@@ -32,11 +33,28 @@ export default class UISettlement extends cc.Component {
      */
     public show(isWin: boolean, score: number, onRestart: Function) {
         this.node.active = true;
+        const gameId = GameCenter.instance.currentSubGameId;
+        const level = DifficultyManager.instance.getCurrentLevel(gameId);
+
+        // 计算倍率
+        const params = DifficultyManager.instance.getParams(gameId);
+        const finalScore = Math.floor(score * params.speed);
+
         this.titleLabel.string = isWin ? "游戏胜利！" : "游戏结束";
-        this.scoreLabel.string = `得分: ${score}`;
+        this.scoreLabel.string = `关卡: ${level}\n得分: ${score} x ${params.speed.toFixed(1)} = ${finalScore}`;
         this._restartCallback = onRestart;
 
-        Logger.getInstance().info("Settlement", isWin ? "玩家胜利" : "玩家失败");
+        // 提交结算数据
+        if (gameId) {
+            DifficultyManager.instance.settle({
+                gameId: gameId,
+                level: level,
+                baseScore: score,
+                isPass: isWin,
+            });
+        }
+
+        Logger.getInstance().info("Settlement", `${gameId} 结算完成: ${isWin ? "胜利" : "失败"}`);
     }
 
     public onBtnRestartClicked() {

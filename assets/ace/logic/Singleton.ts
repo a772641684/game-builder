@@ -1,4 +1,4 @@
-import { Logger } from "../../../script/logic/Logger";
+import { Logger } from "../../script/logic/Logger";
 
 /**
  * 逻辑单例基类
@@ -25,9 +25,4 @@ export abstract class Singleton<T> {
     protected init(): void {
         Logger.getInstance().info("Singleton", `${this.constructor.name} 初始化完成`);
     }
-
-    /**
-     * 销毁单例
-     */
-    public abstract destroy(): void;
 }

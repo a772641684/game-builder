@@ -1,5 +1,6 @@
 import { Singleton } from "../../ace/logic/Singleton";
 import { UI_ENUM } from "../enums/UIEnum";
+import { DifficultyManager } from "./DifficultyManager";
 import { Loader } from "./Loader";
 import { Logger } from "./Logger";
 
@@ -12,11 +13,23 @@ export class GameCenter extends Singleton<GameCenter> {
     private _currentUI: cc.Node = null;
     private _rootNode: cc.Node = null;
 
+    public get currentSubGameId(): string | null {
+        return this._currentSubGameId;
+    }
+
     /**
      * 获取单例实例 (遵循 Singleton 模式)
      */
     public static get instance(): GameCenter {
-        return super.instance as GameCenter;
+        if (!this._instance) {
+            this._instance = new GameCenter();
+            this._instance.init();
+        }
+        return this._instance;
+    }
+
+    public static getInstance(): GameCenter {
+        return this.instance;
     }
 
     protected init(): void {
@@ -40,6 +53,9 @@ export class GameCenter extends Singleton<GameCenter> {
         this._currentSubGameId = gameId;
         Logger.getInstance().info("GameCenter", `尝试进入游戏: ${gameId}`);
 
+        // 初始化难度进度
+        DifficultyManager.instance.getCurrentLevel(gameId);
+
         const path = this._getUIPathByGameId(gameId);
         if (!path) {
             Logger.getInstance().error("GameCenter", `未找到游戏资源路径: ${gameId}`);
@@ -54,6 +70,13 @@ export class GameCenter extends Singleton<GameCenter> {
      */
     public returnToHome(): void {
         Logger.getInstance().info("GameCenter", `退出游戏: ${this._currentSubGameId}, 返回主页`);
+
+        // 游戏中断或完成时的自动保存 (可选逻辑由 DifficultyManager 最终决定)
+        if (this._currentSubGameId) {
+            const lv = DifficultyManager.instance.getCurrentLevel(this._currentSubGameId);
+            Logger.getInstance().info("GameCenter", `退出前备份 ${this._currentSubGameId} 进度: LV ${lv}`);
+        }
+
         this._currentSubGameId = null;
         this._loadAndShowUI(UI_ENUM.HOME);
     }
