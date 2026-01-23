@@ -1,5 +1,6 @@
 import { Singleton } from "../../ace/logic/Singleton";
 import { UI_ENUM } from "../enums/UIEnum";
+import { Loader } from "./Loader";
 import { Logger } from "./Logger";
 
 /**
@@ -69,6 +70,18 @@ export class GameCenter extends Singleton<GameCenter> {
                 return UI_ENUM.GAME_DIFFERENCES;
             case "PIPE":
                 return UI_ENUM.GAME_PIPE;
+            case "CLAW":
+                return UI_ENUM.GAME_CLAW;
+            case "FLOOR":
+                return UI_ENUM.GAME_FLOOR;
+            case "DOODLE":
+                return UI_ENUM.GAME_DOODLE;
+            case "POLY":
+                return UI_ENUM.GAME_POLY;
+            case "BOUNCY":
+                return UI_ENUM.GAME_BOUNCY;
+            case "BUBBLE":
+                return UI_ENUM.GAME_BUBBLE;
             default:
                 return null;
         }
@@ -83,7 +96,7 @@ export class GameCenter extends Singleton<GameCenter> {
             }
         }
 
-        cc.resources.load(path, cc.Prefab, (err, prefab: cc.Prefab) => {
+        Loader.instance.load(path, cc.Prefab, (err, prefab: cc.Prefab) => {
             if (err) {
                 Logger.getInstance().error("GameCenter", `资源加载失败: ${path}, 错误: ${err.message}`);
                 return;
@@ -94,8 +107,8 @@ export class GameCenter extends Singleton<GameCenter> {
                 this._currentUI.destroy();
             }
 
-            // 实例化新 UI
-            this._currentUI = cc.instantiate(prefab);
+            // 实例化新 UI [宪法 IV 合规]
+            this._currentUI = Loader.instance.instantiate(prefab);
             this._currentUI.parent = this._rootNode;
             this._currentUI.setPosition(0, 0);
 

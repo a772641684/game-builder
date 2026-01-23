@@ -14,6 +14,12 @@ const { ccclass, property } = cc._decorator;
  *     - BtnPuzzle (Button)
  *     - BtnDifferences (Button)
  *     - BtnPipe (Button)
+ *     - BtnClaw (Button)
+ *     - BtnFloor (Button)
+ *     - BtnDoodle (Button)
+ *     - BtnPoly (Button)
+ *     - BtnBouncy (Button)
+ *     - BtnBubble (Button)
  */
 @ccclass
 export default class UIHome extends cc.Component {
@@ -37,6 +43,30 @@ export default class UIHome extends cc.Component {
     @property(cc.Node)
     btnPipe: cc.Node = null;
 
+    /** 节点路径: GameList/BtnClaw */
+    @property(cc.Node)
+    btnClaw: cc.Node = null;
+
+    /** 节点路径: GameList/BtnFloor */
+    @property(cc.Node)
+    btnFloor: cc.Node = null;
+
+    /** 节点路径: GameList/BtnDoodle */
+    @property(cc.Node)
+    btnDoodle: cc.Node = null;
+
+    /** 节点路径: GameList/BtnPoly */
+    @property(cc.Node)
+    btnPoly: cc.Node = null;
+
+    /** 节点路径: GameList/BtnBouncy */
+    @property(cc.Node)
+    btnBouncy: cc.Node = null;
+
+    /** 节点路径: GameList/BtnBubble */
+    @property(cc.Node)
+    btnBubble: cc.Node = null;
+
     protected onLoad() {
         Logger.getInstance().info("UI", "主界面加载完成");
 
@@ -46,6 +76,13 @@ export default class UIHome extends cc.Component {
         this.btnPuzzle && this.btnPuzzle.on("click", this.onBtnPuzzleClick, this);
         this.btnDifferences && this.btnDifferences.on("click", this.onBtnDifferencesClick, this);
         this.btnPipe && this.btnPipe.on("click", this.onBtnPipeClick, this);
+
+        this.btnClaw && this.btnClaw.on("click", () => GameCenter.instance.enterGame("CLAW"), this);
+        this.btnFloor && this.btnFloor.on("click", () => GameCenter.instance.enterGame("FLOOR"), this);
+        this.btnDoodle && this.btnDoodle.on("click", () => GameCenter.instance.enterGame("DOODLE"), this);
+        this.btnPoly && this.btnPoly.on("click", () => GameCenter.instance.enterGame("POLY"), this);
+        this.btnBouncy && this.btnBouncy.on("click", () => GameCenter.instance.enterGame("BOUNCY"), this);
+        this.btnBubble && this.btnBubble.on("click", () => GameCenter.instance.enterGame("BUBBLE"), this);
     }
 
     /**

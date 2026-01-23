@@ -330,6 +330,69 @@ class PrefabBuilder {
                 });
                 node._components.push({ __id__: colliderId });
             }
+            // 检查常用组件：HingeJoint
+            if (nodeStruct.name.includes("cc.HingeJoint") || nodeStruct.name.includes("HingeJoint")) {
+                const jointId = json.length;
+                json.push({
+                    __type__: "cc.HingeJoint",
+                    _name: "",
+                    _objFlags: 0,
+                    node: { __id__: nodeId },
+                    _enabled: true,
+                    anchor: { __type__: "cc.Vec2", x: 0, y: 0 },
+                    connectedAnchor: { __type__: "cc.Vec2", x: 0, y: 0 },
+                    connectedBody: null,
+                    collideConnected: false,
+                    enableLimit: false,
+                    lowerAngle: 0,
+                    upperAngle: 0,
+                    enableMotor: false,
+                    maxMotorTorque: 1000,
+                    motorSpeed: 0,
+                    _id: "",
+                });
+                node._components.push({ __id__: jointId });
+            }
+            // 检查常用组件：DistanceJoint
+            if (nodeStruct.name.includes("cc.DistanceJoint") || nodeStruct.name.includes("DistanceJoint")) {
+                const jointId = json.length;
+                json.push({
+                    __type__: "cc.DistanceJoint",
+                    _name: "",
+                    _objFlags: 0,
+                    node: { __id__: nodeId },
+                    _enabled: true,
+                    anchor: { __type__: "cc.Vec2", x: 0, y: 0 },
+                    connectedAnchor: { __type__: "cc.Vec2", x: 0, y: 0 },
+                    connectedBody: null,
+                    collideConnected: false,
+                    distance: 100,
+                    frequency: 0,
+                    dampingRatio: 0,
+                    _id: "",
+                });
+                node._components.push({ __id__: jointId });
+            }
+            // 检查常用组件：RigidBody
+            if (nodeStruct.name.includes("cc.RigidBody") || nodeStruct.name.includes("RigidBody")) {
+                const rbId = json.length;
+                json.push({
+                    __type__: "cc.RigidBody",
+                    _name: "",
+                    _objFlags: 0,
+                    node: { __id__: nodeId },
+                    _enabled: true,
+                    _type: nodeStruct.name.includes("Static") ? 0 : 2, // 0: Static, 2: Dynamic
+                    _allowSleep: true,
+                    _gravityScale: 1,
+                    _linearDamping: 0,
+                    _angularDamping: 0,
+                    _fixedRotation: false,
+                    _bullet: false,
+                    _id: "",
+                });
+                node._components.push({ __id__: rbId });
+            }
             // 检查组件名挂载（如 PrefabGameCarWaitingSlot）
             if (nodeStruct.name.includes("挂载")) {
                 const match = nodeStruct.name.match(/挂载\s+(\w+)/);

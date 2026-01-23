@@ -15,6 +15,20 @@ export const UI_ENUM = {
     GAME_DIFFERENCES: "ui/UIGameDifferences",
     /** 水管接通 */
     GAME_PIPE: "ui/UIGamePipe",
+    /** 抓娃娃 */
+    GAME_CLAW: "ui/UIPlayGroundGameClaw",
+    /** 下一百层 */
+    GAME_FLOOR: "ui/UIPlayGroundGameFloor",
+    /** 涂鸦跳跃 */
+    GAME_DOODLE: "ui/UIPlayGroundGameDoodle",
+    /** 点线交织 */
+    GAME_POLY: "ui/UIPlayGroundGamePoly",
+    /** 弹弹球 */
+    GAME_BOUNCY: "ui/UIPlayGroundGameBouncy",
+    /** 泡泡龙 */
+    GAME_BUBBLE: "ui/UIPlayGroundGameBubble",
+    /** 结算面板 */
+    SETTLEMENT: "ui/UISettlement",
     /** 通用确认弹窗 */
     COMMON_DIALOG: "ui/CommonDialog",
 } as const;

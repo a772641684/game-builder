@@ -7,6 +7,8 @@ import { Logger } from "./Logger";
  */
 export class StorageControl extends Singleton<StorageControl> {
     private readonly STORAGE_KEY = "LegendMultiGames_UserData";
+    public readonly EXTRA_GAME_HIGHSCORE = "EXTRA_GAME_HIGHSCORE";
+    public readonly EXTRA_GAME_UNLOCKS = "EXTRA_GAME_UNLOCKS";
 
     public static get instance(): StorageControl {
         return super.instance as StorageControl;
