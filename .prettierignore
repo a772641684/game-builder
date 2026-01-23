@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+temp/
+library/
+local/
+coverage/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.meta
+*.prefab
+*.anim
+*.fire
+*.scene

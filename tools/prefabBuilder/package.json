@@ -1,0 +1,18 @@
+{
+    "name": "prefab-builder",
+    "version": "1.0.0",
+    "description": "Cocos Creator 2.3.x Prefab Scaffolding Tool",
+    "main": "compiled/index.js",
+    "scripts": {
+        "tsc": "tsc",
+        "build": "tsc",
+        "start": "node compiled/index.js",
+        "test": "node compiled/test.js"
+    },
+    "dependencies": {
+        "typescript": "^5.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0"
+    }
+}
