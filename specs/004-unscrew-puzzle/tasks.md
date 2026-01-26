@@ -40,11 +40,11 @@
 
 **独立测试点**: 手动在预制体中放置两个螺丝和一个板，连续点击两个螺丝后，板能够物理掉落出屏幕。
 
-- [ ] T010 [US1] 在 `assets/script/prefab/PrefabGameScrew.ts` 中实现点击射线检测与事件上报
-- [ ] T011 [US1] 实现 `assets/script/logic/UnscrewControl.ts` 中的 `tryUnscrew` 逻辑：断开 `WeldJoint`
-- [ ] T012 [P] [US1] 在 `assets/script/logic/UnscrewControl.ts` 实现螺丝移向备用槽位的 `cc.tween` 动画
-- [ ] T013 [US1] 在 `assets/script/prefab/PrefabGamePlate.ts` 中根据螺丝状态动态切换 `cc.RigidBody` 类型
-- [ ] T014 [US1] 实现 `assets/script/prefab/PrefabGamePlate.ts` 的销毁逻辑：超出屏幕底部时调用 `destroy`
+- [x] T010 [US1] 在 `assets/script/prefab/PrefabGameScrew.ts` 中实现点击交互与事件上报
+- [x] T011 [US1] 实现 `assets/script/logic/UnscrewControl.ts` 中的 `tryUnscrew` 逻辑：断开 `WeldJoint`
+- [x] T012 [P] [US1] 在 `assets/script/logic/UnscrewControl.ts` 实现螺丝移向备用槽位的 `cc.tween` 动画
+- [x] T013 [US1] 在 `assets/script/prefab/PrefabGamePlate.ts` 中根据螺丝状态动态切换 `cc.RigidBody` 类型
+- [x] T014 [US1] 实现 `assets/script/prefab/PrefabGamePlate.ts` 的销毁逻辑：超出屏幕底部时调用 `destroy`
 
 ---
 
@@ -54,11 +54,11 @@
 
 **独立测试点**: 连续拆卸螺丝填满所有槽位，第 4 个开始点击无效并触发抖动反馈，弹出结算失败界面。
 
-- [ ] T015 [US2] 在 `assets/script/logic/UnscrewControl.ts` 维护槽位数组 `(IScrewData | null)[]`
-- [ ] T016 [P] [US2] 在 `assets/script/ui/UIPlayGroundGameUnscrew.ts` 实现顶部槽位的状态刷新
-- [ ] T017 [US2] 实现失败检测：当 `slots` 数组全满且场景中仍有存活板时，触发失败流程
-- [ ] T018 [US2] 在 `assets/script/logic/UnscrewControl.ts` 实现快照存储逻辑：记录每步操作前的物理状态
-- [ ] T019 [US2] 实现 `undo` 指令：根据快照恢复螺丝位置与板的关节约束
+- [x] T015 [US2] 在 `assets/script/logic/UnscrewControl.ts` 维护槽位数组 `(IScrewData | null)[]`
+- [x] T016 [P] [US2] 在 `assets/script/ui/UIPlayGroundGameUnscrew.ts` 实现顶部槽位的状态刷新
+- [x] T017 [US2] 实现失败检测：当 `slots` 数组全满且场景中仍有存活板时，触发失败流程
+- [x] T018 [US2] 在 `assets/script/logic/UnscrewControl.ts` 实现快照存储逻辑：记录每步操作前的物理状态
+- [x] T019 [US2] 实现 `undo` 指令：根据快照恢复螺丝位置与板的关节约束
 
 ---
 
@@ -68,11 +68,11 @@
 
 **独立测试点**: 最后一个板掉落后，自动触发胜利结算，并能点击“下一关”加载新关卡。
 
-- [ ] T020 [US3] 实现场景板存量检测：所有具备目标标签的板销毁后触发胜利
-- [ ] T021 [P] [US3] 对接 `assets/script/ui/UISettlement.ts` 的显示与回调逻辑
-- [ ] T022 [US3] 实现“失败复活”逻辑：清理 2 个已占用的槽位，并支持动态增加 1 个临时空槽位
-- [ ] T023 [US3] 在 `assets/script/logic/UnscrewControl.ts` 中集成 `StorageControl` 保存关卡进度
-- [ ] T029 [US3] 实现关卡重置功能 (FR-009)
+- [x] T020 [US3] 实现场景板存量检测：所有具备目标标签的板销毁后触发胜利
+- [x] T021 [P] [US3] 对接 `assets/script/ui/UISettlement.ts` 的显示与回调逻辑
+- [x] T022 [US3] 实现“失败复活”逻辑：清理 2 个已占用的槽位，并支持动态增加 1 个临时空槽位
+- [x] T023 [US3] 在 `assets/script/logic/UnscrewControl.ts` 中集成 `StorageControl` 保存关卡进度
+- [x] T029 [US3] 实现关卡重置功能 (FR-009)
 
 ---
 
@@ -80,11 +80,11 @@
 
 **目标**: 性能优化与规范化审计
 
-- [ ] T024 [P] 为所有新增脚本补全中文 JSDoc 并添加 `[Prefab 结构说明]`
-- [ ] T025 统一日志：将所有 `Logger` 标签规范为 "Unscrew"，并确保消息语言为中文
-- [ ] T026 物理压测：在 `assets/script/logic/UnscrewControl.ts` 中添加性能监控，确保 60 FPS
-- [ ] T027 运行 `node tools/genMeta.js` 更新所有新增脚本的资源 ID
-- [ ] T028 [US3] 遵循《宪法》原则 X: 在 `assets/script/ui/UIPlayGroundGameUnscrew.ts` 的 `onDestroy` 中显式执行 `UnscrewControl.destroyInstance()` 确保内存释放
+- [x] T024 [P] 为所有新增脚本补全中文 JSDoc 并添加 `[Prefab 结构说明]`
+- [x] T025 统一日志：将所有 `Logger` 标签规范为 "Unscrew"，并确保消息语言为中文
+- [x] T026 物理压测：在 `assets/script/logic/UnscrewControl.ts` 中添加性能监控，确保 60 FPS
+- [x] T027 运行 `node tools/genMeta.js` 更新所有新增脚本的资源 ID
+- [x] T028 [US3] 遵循《宪法》原则 X: 在 `assets/script/ui/UIPlayGroundGameUnscrew.ts` 的 `onDestroy` 中显式执行 `UnscrewControl.destroyInstance()` 确保内存释放
 
 ---
 

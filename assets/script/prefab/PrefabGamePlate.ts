@@ -1,4 +1,5 @@
 const { ccclass, property } = cc._decorator;
+import { UnscrewControl } from "../logic/UnscrewControl";
 
 /**
  * 金属板组件脚本
@@ -22,13 +23,40 @@ export default class PrefabGamePlate extends cc.Component {
     public init(id: string, initialHoles: number): void {
         this.plateId = id;
         this.holeCount = initialHoles;
+        // 初始确保刚体类型
+        const rb = this.getComponent(cc.RigidBody);
+        if (rb) {
+            rb.type = cc.RigidBodyType.Dynamic; // 保持动态，由 WeldJoint 固定
+        }
     }
 
     /**
-     * 更新板的重力状态
-     * 当孔位为 0 时，将 RigidBody 类型切换为 Dynamic
+     * 响应螺丝移除
+     * FR-004: 当所有孔位螺丝移除后，金属板应自然掉落
      */
-    public updatePhysicsState(): void {
-        // TODO: 实现 FR-004
+    public onScrewRemoved(): void {
+        this.holeCount--;
+        if (this.holeCount <= 0) {
+            this.holeCount = 0;
+            // 板块已自由，物理引擎会自动处理掉落 (因为类型是 Dynamic)
+        }
+    }
+
+    /**
+     * 响应螺丝恢复 (撤销操作)
+     */
+    public onScrewRestored(): void {
+        this.holeCount++;
+        // 如果之前已经掉落了一部分，恢复约束后会停止继续加速掉落
+    }
+
+    /**
+     * 每一帧检查是否超出屏幕 (T014)
+     */
+    protected update(dt: number): void {
+        if (this.node.y < -cc.winSize.height / 2 - 200) {
+            UnscrewControl.getInstance().onPlateDestroyed(); // 报告销毁以进行胜利检测
+            this.node.destroy();
+        }
     }
 }

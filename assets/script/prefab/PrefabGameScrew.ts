@@ -26,6 +26,6 @@ export default class PrefabGameScrew extends cc.Component {
     private onClick(): void {
         Logger.getInstance().info("Unscrew", `螺丝被点击: ${this.screwId}`);
         // 调用逻辑控制器尝试拆卸
-        UnscrewControl.getInstance().tryUnscrew(this.screwId);
+        UnscrewControl.getInstance().tryUnscrew(this);
     }
 }
