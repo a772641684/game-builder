@@ -27,6 +27,8 @@ export const UI_ENUM = {
     GAME_BOUNCY: "ui/UIPlayGroundGameBouncy",
     /** 泡泡龙 */
     GAME_BUBBLE: "ui/UIPlayGroundGameBubble",
+    /** 拆螺丝益智游戏 */
+    UNSCREW_PUZZLE: "ui/UIPlayGroundGameUnscrew",
     /** 结算面板 */
     SETTLEMENT: "ui/UISettlement",
     /** 通用确认弹窗 */

@@ -1,14 +1,14 @@
 <!--
 # Sync Impact Report
-Version change: 2.13.0 -> 2.14.0
+Version change: 2.14.0 -> 2.15.0
 Modified principles:
-  - XVIII. 快速原型与 Demo 导向: 明确项目目标为快速生成游戏 Demo 和原型。
+  - VI. 注释文档规范: 强调所有 checkList 及清单模板必须全程使用中文。
 Modified sections:
-  - 核心原则 (添加 XVIII)
+  - 核心原则 (VI 补充说明)
 Templates requiring updates:
-  - [plan-template.md](.specify/templates/plan-template.md) (✅ updated)
+  - [checklist-template.md](.specify/templates/checklist-template.md) (✅ updated)
 Follow-up TODOs:
-  - 无。
+  - 翻译所有现存的 English Checklists。
 -->
 
 # 萌鱼泡泡 (Bubble Fish) 项目宪法
@@ -69,6 +69,7 @@ Follow-up TODOs:
 - **强制注释**：新增的所有公共/私有方法、全局函数必须补全 JSDoc 格式注释，明确说明功能意图、参数含义及返回值。
 - **语言要求**：所有后续新增的功能逻辑、复杂的算法说明、公共 API 的 JSDoc 注释、**日志打印内容 (Logger message)**、以及所有 Markdown (`.md`) 文档必须使用中文（关键技术术语除外）。
 - **流程文档规范**：`spec.md` (需求说明)、`plan.md` (实施方案) 以及所有 `checklists/*.md` (质量自检清单) 必须全程使用中文编写，除专有名词外禁止使用英文。
+- **自检清单规范**：所有 `checkList` 相关的 Markdown 文件及其模板必须强制使用中文，以确保 AI 能够准确理解质量评估标准。
 - **Git 提交信息**：所有 Git commit message 必须使用中文（或约定式提交前缀: 中文描述格式，如 `feat: 新增道具系统`），以确保版本历史的可读性。
 - **依据**：为了减少跨团队（以及与 AI 助手）理解代码时的文化与语言隔阂，提高自动化工具分析性能，并确保项目文档对所有成员（及 AI）具有最高的可理解性。
 
