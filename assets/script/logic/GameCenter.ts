@@ -1,8 +1,8 @@
 import { Singleton } from "../../ace/logic/Singleton";
 import { UI_ENUM } from "../enums/UIEnum";
 import { DifficultyManager } from "./DifficultyManager";
-import { Loader } from "./Loader";
 import { Logger } from "./Logger";
+import { UILayer, UIManager } from "./UIManager";
 
 /**
  * 全局游戏中心管理类
@@ -10,8 +10,6 @@ import { Logger } from "./Logger";
  */
 export class GameCenter extends Singleton<GameCenter> {
     private _currentSubGameId: string | null = null;
-    private _currentUI: cc.Node = null;
-    private _rootNode: cc.Node = null;
 
     public get currentSubGameId(): string | null {
         return this._currentSubGameId;
@@ -41,8 +39,8 @@ export class GameCenter extends Singleton<GameCenter> {
      * 设置 UI 根节点 (通常是 Canvas)
      */
     public setRootNode(node: cc.Node): void {
-        this._rootNode = node;
-        Logger.getInstance().info("GameCenter", "注册 UI 根节点成功");
+        UIManager.instance.setRoot(node);
+        Logger.getInstance().info("GameCenter", "注册 UI 根节点并同步给 UIManager");
     }
 
     /**
@@ -62,7 +60,7 @@ export class GameCenter extends Singleton<GameCenter> {
             return;
         }
 
-        this._loadAndShowUI(path);
+        UIManager.instance.openUI(path, UILayer.Base);
     }
 
     /**
@@ -78,7 +76,7 @@ export class GameCenter extends Singleton<GameCenter> {
         }
 
         this._currentSubGameId = null;
-        this._loadAndShowUI(UI_ENUM.HOME);
+        UIManager.instance.openUI(UI_ENUM.HOME, UILayer.Base);
     }
 
     private _getUIPathByGameId(gameId: string): string | null {
@@ -108,35 +106,6 @@ export class GameCenter extends Singleton<GameCenter> {
             default:
                 return null;
         }
-    }
-
-    private _loadAndShowUI(path: string): void {
-        if (!this._rootNode) {
-            this._rootNode = cc.find("Canvas");
-            if (!this._rootNode) {
-                Logger.getInstance().error("GameCenter", "未在场景中找到 Canvas, 无法加载 UI");
-                return;
-            }
-        }
-
-        Loader.instance.load(path, cc.Prefab, (err, prefab: cc.Prefab) => {
-            if (err) {
-                Logger.getInstance().error("GameCenter", `资源加载失败: ${path}, 错误: ${err.message}`);
-                return;
-            }
-
-            // 清理旧 UI
-            if (this._currentUI && this._currentUI.isValid) {
-                this._currentUI.destroy();
-            }
-
-            // 实例化新 UI [宪法 IV 合规]
-            this._currentUI = Loader.instance.instantiate(prefab);
-            this._currentUI.parent = this._rootNode;
-            this._currentUI.setPosition(0, 0);
-
-            Logger.getInstance().info("GameCenter", `界面挂载成功: ${path}`);
-        });
     }
 
     public destroy(): void {
