@@ -15,11 +15,11 @@
 
 **目标**: 基础枚举注册与脚本骨架创建
 
-- [ ] T001 [P] 注册 `UNSCREW_PUZZLE` 游戏 ID 于 `assets/script/enums/UIEnum.ts`
-- [ ] T002 [P] 创建单例控制器骨架 `assets/script/logic/UnscrewControl.ts`
-- [ ] T003 [P] 创建螺丝预制体脚本 `assets/script/prefab/PrefabGameScrew.ts`
-- [ ] T004 [P] 创建金属板预制体脚本 `assets/script/prefab/PrefabGamePlate.ts`
-- [ ] T005 [P] 创建主界面 UI 脚本 `assets/script/ui/UIPlayGroundGameUnscrew.ts`
+- [x] T001 [P] 注册 `UNSCREW_PUZZLE` 游戏 ID 于 `assets/script/enums/UIEnum.ts`
+- [x] T002 [P] 创建单例控制器骨架 `assets/script/logic/UnscrewControl.ts`
+- [x] T003 [P] 创建螺丝预制体脚本 `assets/script/prefab/PrefabGameScrew.ts`
+- [x] T004 [P] 创建金属板预制体脚本 `assets/script/prefab/PrefabGamePlate.ts`
+- [x] T005 [x] 创建主界面 UI 脚本 `assets/script/ui/UIPlayGroundGameUnscrew.ts`
 
 ---
 
@@ -27,10 +27,10 @@
 
 **目标**: 物理引擎配置与核心约束逻辑实现
 
-- [ ] T006 在 `assets/script/logic/UnscrewControl.ts` 中初始化物理引擎并设置重力环境
-- [ ] T007 [P] 实现数据映射逻辑：解析 `data-model.md` 定义的 JSON 关卡结构
-- [ ] T008 在 `assets/script/logic/UnscrewControl.ts` 实现 `cc.WeldJoint` 动态生成工具方法
-- [ ] T009 [P] 创建物理容器层级预制体 `assets/resources/prefabs/game/UIPlayGroundGameUnscrew.prefab`
+- [x] T006 在 `assets/script/logic/UnscrewControl.ts` 中初始化物理引擎并设置重力环境
+- [x] T007 [P] 实现数据映射逻辑：解析 `data-model.md` 定义的 JSON 关卡结构
+- [x] T008 在 `assets/script/logic/UnscrewControl.ts` 实现 `cc.WeldJoint` 动态生成工具方法
+- [x] T009 [P] 创建物理容器层级预制体 assets/resources/ui/UIPlayGroundGameUnscrew.prefab
 
 ---
 

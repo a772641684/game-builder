@@ -5,8 +5,8 @@ import { UnscrewControl } from "../logic/UnscrewControl";
 /**
  * 螺丝组件脚本
  * [Prefab 结构说明]:
- * 根节点 (PrefabGameScrew): 挂载此脚本，包含 cc.RigidBody (Static) 和 cc.PhysicsCircleCollider。
- * └── View: 精灵图节点，显示螺丝样式。
+ * - PrefabGameScrew
+ *   - View
  */
 @ccclass
 export default class PrefabGameScrew extends cc.Component {

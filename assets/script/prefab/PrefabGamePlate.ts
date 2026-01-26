@@ -4,8 +4,8 @@ import { UnscrewControl } from "../logic/UnscrewControl";
 /**
  * 金属板组件脚本
  * [Prefab 结构说明]:
- * 根节点 (PrefabGamePlate): 挂载此脚本，包含 cc.RigidBody (Static) 和 cc.PhysicsPolygonCollider。
- * └── Content: 渲染金属板形状的节点。
+ * - PrefabGamePlate
+ *   - Content
  */
 @ccclass
 export default class PrefabGamePlate extends cc.Component {

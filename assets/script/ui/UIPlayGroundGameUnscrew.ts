@@ -4,14 +4,25 @@ import { UnscrewControl } from "../logic/UnscrewControl";
 /**
  * 拆螺丝益智游戏主 UI 面板
  * [Prefab 结构说明]:
- * 根节点 (UIPlayGroundGameUnscrew): 容器节点。
- * ├── TopUI: 顶部槽位容器。
- * └── GameArea: 物理引擎作用的关卡物品容器。
+ * - UIPlayGroundGameUnscrew
+ *   - TopUI
+ *   - GameArea
  */
 @ccclass
 export default class UIPlayGroundGameUnscrew extends cc.Component {
+    /**
+     * @description 顶部槽位容器
+     * 节点路径: TopUI
+     */
     @property(cc.Node)
     protected slotContainer: cc.Node = null;
+
+    /**
+     * @description 关卡物品容器
+     * 节点路径: GameArea
+     */
+    @property(cc.Node)
+    protected gameArea: cc.Node = null;
 
     /**
      * 获取指定索引槽位的世界坐标
