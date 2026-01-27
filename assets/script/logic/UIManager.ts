@@ -68,10 +68,20 @@ export class UIManager extends Singleton<UIManager> {
      * @param path UI 路径 (UI_ENUM)
      * @param layer 层级
      * @param cleanupBase 是否清理 Base 层 (仅对 Base 层有效)
+     * @param callback 加载完成后的回调
      */
-    public openUI(path: string, layer: UILayer = UILayer.Base, cleanupBase: boolean = true): void {
+    public openUI(
+        path: string,
+        layer: UILayer = UILayer.Base,
+        cleanupBase: boolean = true,
+        callback?: (node: cc.Node) => void
+    ): void {
         if (this._uiNodes.has(path)) {
-            Logger.getInstance().warn("UIManager", `UI 已存在: ${path}`);
+            const node = this._uiNodes.get(path);
+            if (node) {
+                node.active = true;
+                callback && callback(node);
+            }
             return;
         }
 
@@ -98,6 +108,7 @@ export class UIManager extends Singleton<UIManager> {
             this._uiNodes.set(path, node);
 
             Logger.getInstance().info("UIManager", `UI 展示成功: ${path}`);
+            callback && callback(node);
         });
     }
 
