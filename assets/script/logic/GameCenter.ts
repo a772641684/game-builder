@@ -105,6 +105,8 @@ export class GameCenter extends Singleton<GameCenter> {
                 return UI_ENUM.GAME_BUBBLE;
             case "UNSCREW":
                 return UI_ENUM.UNSCREW_PUZZLE;
+            case "MERGE":
+                return UI_ENUM.MERGE_GAME;
             case "SHEEP_MATCH":
                 return UI_ENUM.SHEEP_MATCH;
             default:

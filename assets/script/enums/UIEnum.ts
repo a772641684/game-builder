@@ -17,6 +17,8 @@ export const UI_ENUM = {
     GAME_PIPE: "ui/UIGamePipe",
     /** 抓娃娃 */
     GAME_CLAW: "ui/UIPlayGroundGameClaw",
+    /** 合成消消乐 */
+    MERGE_GAME: "ui/UIPlayGroundGameMerge",
     /** 下一百层 */
     GAME_FLOOR: "ui/UIPlayGroundGameFloor",
     /** 涂鸦跳跃 */
