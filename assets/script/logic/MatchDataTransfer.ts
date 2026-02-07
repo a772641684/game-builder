@@ -37,23 +37,28 @@ export interface ISheepMatchLevel {
  */
 export interface ISlotItem {
     /** 对应的方块唯一 ID */
-    uid: string;
+    id: string;
     /** 方块类型 */
-    typeId: string;
-    /** 脚本控制器的引用 (用于回退动画等) */
-    tileScript?: any;
+    type: number;
+    /** Cocos 节点引用 */
+    node: cc.Node;
 }
 
 /**
  * 撤销命令接口
  */
 export interface IMatchCommand {
+    /** 动作类型 (如 "move") */
+    action: string;
     /** 操作的方块 UID */
-    uid: string;
-    /** 方块从哪个槽位索引被移出 */
-    slotIndex: number;
-    /** 方块在场景中的原始坐标 */
-    originPos: cc.Vec2;
+    tileId: string;
     /** 执行的时间戳 */
     timestamp: number;
+    /** 动作快照数据 */
+    data: {
+        /** 方块在场景中的原始坐标 */
+        originalPos: cc.Vec2;
+        /** 原始深度层级 */
+        originalLayer: number;
+    };
 }

@@ -125,8 +125,9 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         rb.linearVelocity = cc.Vec2.ZERO;
 
         const config = BubbleControl.instance.config;
+        const bulletPos = cc.v2(this._currentBullet.x, this._currentBullet.y);
         const worldPos = this.bubbleContainer.convertToNodeSpaceAR(
-            this._currentBullet.parent.convertToWorldSpaceAR(this._currentBullet.position)
+            this._currentBullet.parent.convertToWorldSpaceAR(bulletPos)
         );
         const grid = BubbleControl.instance.worldToGrid(worldPos);
 
@@ -243,7 +244,8 @@ export default class UIPlayGroundGameBubble extends cc.Component {
 
         const touchPos = event.getLocation();
         const localPos = this.node.convertToNodeSpaceAR(touchPos);
-        const dir = localPos.sub(this.shooter.position);
+        const shooterPos = cc.v2(this.shooter.x, this.shooter.y);
+        const dir = localPos.sub(shooterPos);
 
         // 计算旋转角度 (0度朝右, Cocos 角度是顺时针)
         let angle = Math.atan2(dir.y, dir.x) * (180 / Math.PI);
@@ -259,7 +261,8 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         this._isShooting = true;
         const touchPos = event.getLocation();
         const localPos = this.node.convertToNodeSpaceAR(touchPos);
-        const dir = localPos.sub(this.shooter.position).normalize();
+        const shooterPos = cc.v2(this.shooter.x, this.shooter.y);
+        const dir = localPos.sub(shooterPos).normalize();
 
         const speed = 1200;
         const rb = this._currentBullet.getComponent(cc.RigidBody);

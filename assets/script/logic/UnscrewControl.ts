@@ -1,7 +1,7 @@
 import { Singleton } from "../../ace/logic/Singleton";
 import { Logger } from "./Logger";
 import { StorageControl } from "./StorageControl";
-import { IUnscrewCommand, IUnscrewLevel, IScrewData } from "./UnscrewDataTransfer";
+import { IScrewData, IUnscrewCommand, IUnscrewLevel } from "./UnscrewDataTransfer";
 
 /**
  * 拆螺丝益智游戏逻辑控制器
@@ -95,7 +95,10 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
         this.remainingPlateCount = data.plates.length; // 初始化目标总数 (T020)
         this.commandHistory = [];
         this.screwJointMap.clear();
-        Logger.getInstance().info("Unscrew", `正在加载关卡ID: ${data.id}, 槽位数: ${data.slotCount}, 金属板数: ${this.remainingPlateCount}`);
+        Logger.getInstance().info(
+            "Unscrew",
+            `正在加载关卡ID: ${data.id}, 槽位数: ${data.slotCount}, 金属板数: ${this.remainingPlateCount}`
+        );
     }
 
     /**
@@ -115,15 +118,32 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
      */
     private handleVictory(): void {
         Logger.getInstance().info("Unscrew", "恭喜！关卡胜利");
-        
+
         // 1. 保存关卡进度 (T023)
         if (this.currentLevel) {
             StorageControl.getInstance().saveData({
-                unscrewLevel: this.currentLevel.id + 1
+                unscrewLevel: this.currentLevel.id + 1,
             });
         }
-        
+
         // 2. TODO: 弹出结算界面
+    }
+
+    /**
+     * 检查核心游戏状态 (失败判定 T018)
+     */
+    private checkState(): void {
+        const hasEmptySlot = this.slots.some((s) => s === null);
+
+        // 如果槽位已满且没有正在掉落板子的余地 (T018)
+        if (!hasEmptySlot && this.remainingPlateCount > 0) {
+            Logger.getInstance().warn("Unscrew", "游戏失败：槽位已满且仍有剩余目标板");
+
+            // TODO: 调用 UI 层的失败展示 (T019)
+            if (this.uiNode && typeof this.uiNode.showGameOver === "function") {
+                this.uiNode.showGameOver(false);
+            }
+        }
     }
 
     /**
@@ -171,19 +191,19 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
             fromPos: screw.node.position.clone(),
             slotIndex: slotIndex,
             recoveredPlates: [],
-            timestamp: Date.now()
+            timestamp: Date.now(),
         };
 
         // 3. 查找对应的物理关节并断开 (FR-004/T011)
         const joints = this.screwJointMap.get(screwId);
         if (joints) {
-            joints.forEach(joint => {
+            joints.forEach((joint) => {
                 if (cc.isValid(joint)) {
                     const plate = joint.node.getComponent("PrefabGamePlate");
                     if (plate) {
                         command.recoveredPlates.push({
                             plate: plate,
-                            anchor: joint.anchor.clone() // 记录锚点位置
+                            anchor: joint.anchor.clone(), // 记录锚点位置
                         });
                         (plate as any).onScrewRemoved();
                     }
@@ -192,18 +212,18 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
             });
             this.screwJointMap.delete(screwId);
         }
-        
+
         // 占位
         this.slots[slotIndex] = { id: screwId } as any;
         this.commandHistory.push(command);
         if (this.commandHistory.length > 20) this.commandHistory.shift(); // 限制快照上限 (宪法 IX)
 
         // 4. 执行移动动画 (T012)
-        let targetWorldPos = cc.v2(0, 400); 
+        let targetWorldPos = cc.v2(0, 400);
         if (this.uiNode && typeof this.uiNode.getSlotWorldPos === "function") {
             targetWorldPos = this.uiNode.getSlotWorldPos(slotIndex);
         }
-        
+
         const targetLocalPos = screw.node.parent.convertToNodeSpaceAR(targetWorldPos);
 
         cc.tween(screw.node)
@@ -227,12 +247,14 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
         this.loadLevel(this.currentLevel);
         // TODO: UI 层需要清理节点并重新生成 (US1 物理环境)
     }
+
+    /**
      * 1. 扩充 1 个临时槽位
      * 2. 清理 2 个已占用的螺丝
      */
     public revive(): void {
         Logger.getInstance().info("Unscrew", "执行复活逻辑：扩充位置并清理螺丝");
-        
+
         // 1. 扩充槽位
         this.slots.push(null);
 
@@ -245,9 +267,14 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
                 if (clearedCount >= 2) break;
             }
         }
-        
+
         // TODO: UI 层需要刷新显示 (T016)
     }
+
+    /**
+     * 执行撤回上一步操作 (T025)
+     */
+    public undoMove(): void {
         const cmd = this.commandHistory.pop();
         if (!cmd) {
             Logger.getInstance().info("Unscrew", "无可撤销的历史记录");
@@ -257,15 +284,13 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
         Logger.getInstance().info("Unscrew", `执行撤销: ${cmd.screw.screwId}`);
 
         // 1. 移回原位
-        cc.tween(cmd.screw.node)
-            .to(0.3, { position: cmd.fromPos }, { easing: "sineIn" })
-            .start();
+        cc.tween(cmd.screw.node).to(0.3, { position: cmd.fromPos }, { easing: "sineIn" }).start();
 
         // 2. 释放槽位
         this.slots[cmd.slotIndex] = null;
 
         // 3. 恢复物理约束
-        cmd.recoveredPlates.forEach(item => {
+        cmd.recoveredPlates.forEach((item) => {
             if (cc.isValid(item.plate)) {
                 const rb = item.plate.getComponent(cc.RigidBody);
                 this.createWeldJoint(cmd.screw.screwId, rb, item.plate.node.convertToWorldSpaceAR(item.anchor));

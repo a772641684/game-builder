@@ -73,6 +73,20 @@ export class BubbleControl extends Singleton<BubbleControl> {
     private _config: IBubbleConfig = { ...DEFAULT_BUBBLE_CONFIG };
 
     /**
+     * 获取当前配置
+     */
+    public get config(): IBubbleConfig {
+        return this._config;
+    }
+
+    /**
+     * 获取当前矩阵快照
+     */
+    public getMatrix(): number[][] {
+        return this._matrix;
+    }
+
+    /**
      * 获取单例实例
      */
     public static get instance(): BubbleControl {
@@ -142,21 +156,20 @@ export class BubbleControl extends Singleton<BubbleControl> {
      * 网格索引转坐标 (Pointy Top 六边形网格)
      * @param row 行索引
      * @param col 列索引
-     * @returns 局部坐标
+     * @returns 局部坐标 (Vec3 适配)
      */
-    public gridToWorld(row: number, col: number): cc.Vec2 {
+    public gridToWorld(row: number, col: number): cc.Vec3 {
         const d = this._config.bubbleSize;
         const x = col * d + (row % 2 === 1 ? d / 2 : 0);
         const y = -row * (d * 0.866);
-        return cc.v2(x, y);
+        return cc.v3(x, y, 0);
     }
 
     /**
-     * 坐标转最近网格索引
+     * 坐标转网格索引
      * @param pos 局部坐标
-     * @returns 网格索引
      */
-    public worldToGrid(pos: cc.Vec2): { r: number; c: number } {
+    public worldToGrid(pos: cc.Vec2 | cc.Vec3): { r: number; c: number } {
         const d = this._config.bubbleSize;
         const r = Math.round(-pos.y / (d * 0.866));
         const c = Math.round((pos.x - (r % 2 === 1 ? d / 2 : 0)) / d);
