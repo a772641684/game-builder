@@ -61,17 +61,27 @@ export default class MergeGameLogic {
      * @param startY 起始 Y
      */
     public getConnectedSquares(startX: number, startY: number): { x: number; y: number }[] {
+        return this.getMergeGroupWithPaths(startX, startY).map((item) => ({ x: item.x, y: item.y }));
+    }
+
+    /**
+     * 获取合并组及其到目标点的路径
+     */
+    public getMergeGroupWithPaths(
+        startX: number,
+        startY: number
+    ): { x: number; y: number; path: { x: number; y: number }[] }[] {
         const targetType = this.getType(startX, startY);
         if (targetType === 0) return [];
 
-        const connected: { x: number; y: number }[] = [];
-        const visited: boolean[][] = [];
-        for (let x = 0; x < this._config.cols; x++) {
-            visited[x] = [];
-        }
+        const result: { x: number; y: number; path: { x: number; y: number }[] }[] = [];
+        const visited = new Set<string>();
 
-        const queue: { x: number; y: number }[] = [{ x: startX, y: startY }];
-        visited[startX][startY] = true;
+        const queue: { x: number; y: number; path: { x: number; y: number }[] }[] = [
+            { x: startX, y: startY, path: [] },
+        ];
+        const key = (x: number, y: number) => `${x},${y}`;
+        visited.add(key(startX, startY));
 
         const directions = [
             { x: 1, y: 0 },
@@ -82,22 +92,30 @@ export default class MergeGameLogic {
 
         while (queue.length > 0) {
             const current = queue.shift();
-            connected.push(current);
+            result.push(current);
 
             for (const dir of directions) {
                 const nx = current.x + dir.x;
                 const ny = current.y + dir.y;
+                const nKey = key(nx, ny);
 
                 if (nx >= 0 && nx < this._config.cols && ny >= 0 && ny < this._config.rows) {
-                    if (!visited[nx][ny] && this.getType(nx, ny) === targetType) {
-                        visited[nx][ny] = true;
-                        queue.push({ x: nx, y: ny });
+                    if (!visited.has(nKey) && this.getType(nx, ny) === targetType) {
+                        // 路径是从 nx,ny 到 startX,startY
+                        // current.path 已经记录了 current 到 startX,startY 的路径
+                        // 所以 nx,ny 的下一个节点是 current
+                        const newPath = [...current.path, { x: current.x, y: current.y }];
+                        // 注意：这里 path 的顺序是 [neighbor1, neighbor2, ..., target]
+                        // 因为是从 target 开始往外搜，所以 path 的最后一个元素应该是 target
+                        // 事实上，BFS 记录从开始点到当前点的路径比较自然
+                        // 这里 startX,startY 是点击的点（最终汇聚点），所以路径这样记录没错
+                        visited.add(nKey);
+                        queue.push({ x: nx, y: ny, path: newPath });
                     }
                 }
             }
         }
-
-        return connected;
+        return result;
     }
 
     /**

@@ -2,6 +2,7 @@ const { ccclass, property } = cc._decorator;
 
 import { DEFAULT_MERGE_GAME_CONFIG, MergeGameState } from "../enums/MergeGameEnum";
 import MergeGameLogic from "../game/MergeGameLogic";
+import { GameCenter } from "../logic/GameCenter";
 import { Loader } from "../logic/Loader";
 import { Logger } from "../logic/Logger";
 import PrefabMergeSquare from "../prefab/PrefabMergeSquare";
@@ -43,6 +44,18 @@ export default class UIPlayGroundGameMerge extends cc.Component {
     protected onLoad(): void {
         this._logic = new MergeGameLogic(DEFAULT_MERGE_GAME_CONFIG);
         this.initView();
+
+        cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
+    }
+
+    protected onDestroy(): void {
+        cc.systemEvent.off(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
+    }
+
+    private onKeyDown(event: cc.Event.EventKeyboard): void {
+        if (event.keyCode === cc.macro.KEY.escape) {
+            GameCenter.instance.returnToHome();
+        }
     }
 
     /**
@@ -65,7 +78,7 @@ export default class UIPlayGroundGameMerge extends cc.Component {
     /**
      * 在指定位置创建方格
      */
-    protected createSquareAt(x: number, y: number, type: number): PrefabMergeSquare {
+    protected createSquareAt(x: number, y: number, type: number, addToGrid: boolean = true): PrefabMergeSquare {
         const node = Loader.instance.instantiate(this.squarePrefab);
         node.parent = this.gameArea;
 
@@ -77,11 +90,21 @@ export default class UIPlayGroundGameMerge extends cc.Component {
         node.setContentSize(DEFAULT_MERGE_GAME_CONFIG.squareWidth, DEFAULT_MERGE_GAME_CONFIG.squareHeight);
 
         // 绑定点击事件
+        node.on(cc.Node.EventType.TOUCH_START, () => {
+            cc.tween(node).to(0.1, { scale: 0.9 }).start();
+        });
+        node.on(cc.Node.EventType.TOUCH_CANCEL, () => {
+            cc.tween(node).to(0.1, { scale: 1.0 }).start();
+        });
         node.on(cc.Node.EventType.TOUCH_END, () => {
-            this.onSquareClick(x, y);
+            cc.tween(node).to(0.1, { scale: 1.0 }).start();
+            // 使用组件当前记录的坐标，防止因下落导致的坐标不一致
+            this.onSquareClick(square.gridX, square.gridY);
         });
 
-        this._squares[x][y] = square;
+        if (addToGrid) {
+            this._squares[x][y] = square;
+        }
         return square;
     }
 
@@ -105,46 +128,26 @@ export default class UIPlayGroundGameMerge extends cc.Component {
     protected async onSquareClick(x: number, y: number): Promise<void> {
         if (this._state !== MergeGameState.IDLE) return;
 
-        let currentX = x;
-        let currentY = y;
-        let chainCount = 0;
+        const connected = this._logic.getConnectedSquares(x, y);
+        if (connected.length <= 1) return;
 
-        while (true) {
-            const connected = this._logic.getConnectedSquares(currentX, currentY);
-            if (connected.length <= 1) break;
+        this._state = MergeGameState.MERGING;
 
-            this._state = MergeGameState.MERGING;
+        // 1. 执行逻辑合并
+        const removedPos = this._logic.merge(x, y);
 
-            // 如果是自动链式触发（chainCount > 0），按照要求延迟
-            if (chainCount > 0) {
-                await new Promise((resolve) => setTimeout(resolve, DEFAULT_MERGE_GAME_CONFIG.chainDelay));
-            }
-
-            // 1. 执行逻辑合并
-            const removedPos = this._logic.merge(currentX, currentY);
-
-            // 2. 更新分数
-            if (this.scoreLabel) {
-                this.scoreLabel.string = `Score: ${this._logic.score}`;
-            }
-
-            // 3. 动画：表现合并
-            await this.playMergeAnimation(currentX, currentY, removedPos);
-
-            // 4. 执行重力
-            await this.handleGravity();
-
-            // 5. 检查是否触发链式合成
-            const nextConnected = this._logic.getConnectedSquares(currentX, currentY);
-            if (nextConnected.length > 1) {
-                chainCount++;
-                Logger.getInstance().info("MergeGame", `触发链式合成! Chain: ${chainCount}`);
-            } else {
-                break;
-            }
+        // 2. 更新分数
+        if (this.scoreLabel) {
+            this.scoreLabel.string = `Score: ${this._logic.score}`;
         }
 
-        // 6. 检查游戏结束
+        // 3. 动画：表现合并
+        await this.playMergeAnimation(x, y, removedPos);
+
+        // 4. 执行重力
+        await this.handleGravity();
+
+        // 5. 检查游戏结束
         if (!this._logic.hasPossibleMoves()) {
             this._state = MergeGameState.GAME_OVER;
             Logger.getInstance().info("MergeGame", "游戏结束: 无可合成方块");
@@ -197,12 +200,13 @@ export default class UIPlayGroundGameMerge extends cc.Component {
                 let square = this._squares[move.fromX] && this._squares[move.fromX][move.fromY];
 
                 if (move.fromY >= DEFAULT_MERGE_GAME_CONFIG.rows) {
-                    // 新生成的
-                    square = this.createSquareAt(move.fromX, move.fromY, move.type);
+                    // 新生成的，坐标 addToGrid 传 false，由外层统一管理 _squares
+                    square = this.createSquareAt(move.fromX, move.fromY, move.type, false);
                     square.node.setPosition(this.gridToPosition(move.fromX, move.fromY));
                 }
 
                 this._squares[move.toX][move.toY] = square;
+                square.gridX = move.toX;
                 square.gridY = move.toY;
 
                 cc.tween(square.node)
