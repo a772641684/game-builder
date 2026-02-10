@@ -122,10 +122,10 @@ export default class MergeGameLogic {
      * 执行合并动作
      * @param x 点击的 X
      * @param y 点击的 Y
-     * @returns 返回合并掉的坐标列表（不含目标点）
+     * @returns 返回合并掉的带路径的信息列表
      */
-    public merge(x: number, y: number): { x: number; y: number }[] {
-        const connected = this.getConnectedSquares(x, y);
+    public merge(x: number, y: number): { x: number; y: number; path: { x: number; y: number }[] }[] {
+        const connected = this.getMergeGroupWithPaths(x, y);
         if (connected.length <= 1) return [];
 
         const targetType = this.getType(x, y);
@@ -134,11 +134,11 @@ export default class MergeGameLogic {
         this._grid[x][y] = targetType + 1;
 
         // 2. 清空其他相连点
-        const removed: { x: number; y: number }[] = [];
-        for (const pos of connected) {
-            if (pos.x === x && pos.y === y) continue;
-            this._grid[pos.x][pos.y] = 0;
-            removed.push(pos);
+        const removed: { x: number; y: number; path: { x: number; y: number }[] }[] = [];
+        for (const item of connected) {
+            if (item.x === x && item.y === y) continue;
+            this._grid[item.x][item.y] = 0;
+            removed.push(item);
         }
 
         // 3. 计算分数 (简单的 N^2 逻辑)
@@ -186,6 +186,22 @@ export default class MergeGameLogic {
         }
 
         return movements;
+    }
+
+    /**
+     * 获取一个可进行的合成动作（从下往上，从左往右找第一个）
+     */
+    public getOneValidMove(): { x: number; y: number } | null {
+        const { rows, cols } = this._config;
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                const connected = this.getConnectedSquares(x, y);
+                if (connected.length > 1) {
+                    return { x, y };
+                }
+            }
+        }
+        return null;
     }
 
     /**

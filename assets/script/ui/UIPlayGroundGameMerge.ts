@@ -14,6 +14,7 @@ import PrefabMergeSquare from "../prefab/PrefabMergeSquare";
  *   - Background (cc.Sprite, opacity: 200)
  *   - GameArea (cc.Node)
  *   - ScoreLabel (cc.Label)
+ *   - AutoButton (cc.Button)
  */
 @ccclass
 export default class UIPlayGroundGameMerge extends cc.Component {
@@ -32,6 +33,13 @@ export default class UIPlayGroundGameMerge extends cc.Component {
     protected scoreLabel: cc.Label = null;
 
     /**
+     * @description 自动合成按钮
+     * 节点路径: AutoButton
+     */
+    @property(cc.Button)
+    protected autoButton: cc.Button = null;
+
+    /**
      * @description 方格预制体
      */
     @property(cc.Prefab)
@@ -40,12 +48,50 @@ export default class UIPlayGroundGameMerge extends cc.Component {
     private _logic: MergeGameLogic = null;
     private _state: MergeGameState = MergeGameState.IDLE;
     private _squares: PrefabMergeSquare[][] = [];
+    private _isAutoPlaying: boolean = false;
 
     protected onLoad(): void {
         this._logic = new MergeGameLogic(DEFAULT_MERGE_GAME_CONFIG);
         this.initView();
 
+        if (this.autoButton) {
+            this.autoButton.node.on("click", this.onAutoBtnClick, this);
+        }
+
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
+    }
+
+    protected async onAutoBtnClick(): Promise<void> {
+        this._isAutoPlaying = !this._isAutoPlaying;
+        this.updateAutoButtonUI();
+
+        if (this._isAutoPlaying && this._state === MergeGameState.IDLE) {
+            this.runAutoStep();
+        }
+    }
+
+    private async runAutoStep(): Promise<void> {
+        if (!this._isAutoPlaying || this._state !== MergeGameState.IDLE) return;
+
+        const move = this._logic.getOneValidMove();
+        if (move) {
+            await this.onSquareClick(move.x, move.y);
+            // 增加一帧延迟，确保状态切换完成
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            this.runAutoStep();
+        } else {
+            this._isAutoPlaying = false;
+            this.updateAutoButtonUI();
+        }
+    }
+
+    private updateAutoButtonUI(): void {
+        if (this.autoButton) {
+            const label = this.autoButton.node.getComponentInChildren(cc.Label);
+            if (label) {
+                label.string = this._isAutoPlaying ? "停止" : "自动";
+            }
+        }
     }
 
     protected onDestroy(): void {
@@ -91,13 +137,13 @@ export default class UIPlayGroundGameMerge extends cc.Component {
 
         // 绑定点击事件
         node.on(cc.Node.EventType.TOUCH_START, () => {
-            cc.tween(node).to(0.1, { scale: 0.9 }).start();
+            cc.tween(node).to(0.05, { scale: 0.9 }).start();
         });
         node.on(cc.Node.EventType.TOUCH_CANCEL, () => {
-            cc.tween(node).to(0.1, { scale: 1.0 }).start();
+            cc.tween(node).to(0.05, { scale: 1.0 }).start();
         });
         node.on(cc.Node.EventType.TOUCH_END, () => {
-            cc.tween(node).to(0.1, { scale: 1.0 }).start();
+            cc.tween(node).to(0.05, { scale: 1.0 }).start();
             // 使用组件当前记录的坐标，防止因下落导致的坐标不一致
             this.onSquareClick(square.gridX, square.gridY);
         });
@@ -134,7 +180,7 @@ export default class UIPlayGroundGameMerge extends cc.Component {
         this._state = MergeGameState.MERGING;
 
         // 1. 执行逻辑合并
-        const removedPos = this._logic.merge(x, y);
+        const removedWithPaths = this._logic.merge(x, y);
 
         // 2. 更新分数
         if (this.scoreLabel) {
@@ -142,7 +188,7 @@ export default class UIPlayGroundGameMerge extends cc.Component {
         }
 
         // 3. 动画：表现合并
-        await this.playMergeAnimation(x, y, removedPos);
+        await this.playMergeAnimation(x, y, removedWithPaths);
 
         // 4. 执行重力
         await this.handleGravity();
@@ -163,17 +209,32 @@ export default class UIPlayGroundGameMerge extends cc.Component {
     protected async playMergeAnimation(
         targetX: number,
         targetY: number,
-        removed: { x: number; y: number }[]
+        removed: { x: number; y: number; path: { x: number; y: number }[] }[]
     ): Promise<void> {
-        const targetPos = this.gridToPosition(targetX, targetY);
-        const promises = removed.map((pos) => {
+        const promises = removed.map((item) => {
             return new Promise<void>((resolve) => {
-                const square = this._squares[pos.x][pos.y];
-                cc.tween(square.node)
-                    .to(DEFAULT_MERGE_GAME_CONFIG.mergeDuration * 0.6, { position: targetPos, scale: 0.5, opacity: 0 })
+                const square = this._squares[item.x][item.y];
+                if (!square) {
+                    resolve();
+                    return;
+                }
+
+                // 轨迹动画：反转路径 (path[0] 是 root，path[n] 是 node 的直接父节点)
+                // path: [root, p1, p2, p3] -> trajectory: [p3, p2, p1, root]
+                const movePath = [...item.path].reverse();
+
+                let t = cc.tween(square.node);
+                // 总时间分配给每一个步长
+                const stepDuration = DEFAULT_MERGE_GAME_CONFIG.mergeDuration / (movePath.length || 1);
+
+                movePath.forEach((pos) => {
+                    t = t.to(stepDuration, { position: this.gridToPosition(pos.x, pos.y) });
+                });
+
+                t.to(0.05, { scale: 0.5, opacity: 0 })
                     .call(() => {
                         square.node.destroy();
-                        this._squares[pos.x][pos.y] = null;
+                        this._squares[item.x][item.y] = null;
                         resolve();
                     })
                     .start();
@@ -210,7 +271,7 @@ export default class UIPlayGroundGameMerge extends cc.Component {
                 square.gridY = move.toY;
 
                 cc.tween(square.node)
-                    .to(0.3, { position: this.gridToPosition(move.toX, move.toY) }, { easing: "bounceOut" })
+                    .to(0.2, { position: this.gridToPosition(move.toX, move.toY) }, { easing: "sineOut" })
                     .call(() => resolve())
                     .start();
             });
