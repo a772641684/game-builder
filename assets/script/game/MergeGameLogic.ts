@@ -1,4 +1,4 @@
-import { DEFAULT_MERGE_GAME_CONFIG, IMergeGameConfig } from "../enums/MergeGameEnum";
+import { DEFAULT_MERGE_GAME_CONFIG, IMergeGameConfig } from "../config/GameConfig";
 
 /**
  * 合成游戏逻辑管理类

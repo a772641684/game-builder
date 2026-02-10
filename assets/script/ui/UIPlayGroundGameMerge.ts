@@ -1,11 +1,15 @@
 const { ccclass, property } = cc._decorator;
 
-import { DEFAULT_MERGE_GAME_CONFIG, MergeGameState } from "../enums/MergeGameEnum";
+import { DEFAULT_MERGE_GAME_CONFIG } from "../config/GameConfig";
+import { MergeGameState } from "../enums/MergeGameEnum";
+import { UI_ENUM } from "../enums/UIEnum";
 import MergeGameLogic from "../game/MergeGameLogic";
 import { GameCenter } from "../logic/GameCenter";
 import { Loader } from "../logic/Loader";
 import { Logger } from "../logic/Logger";
+import { UILayer, UIManager } from "../logic/UIManager";
 import PrefabMergeSquare from "../prefab/PrefabMergeSquare";
+import UISettlement from "./UISettlement";
 
 /**
  * 合成游戏主界面
@@ -197,10 +201,36 @@ export default class UIPlayGroundGameMerge extends cc.Component {
         if (!this._logic.hasPossibleMoves()) {
             this._state = MergeGameState.GAME_OVER;
             Logger.getInstance().info("MergeGame", "游戏结束: 无可合成方块");
-            // 可根据需要弹出结束 UI
+
+            UIManager.instance.openUI(UI_ENUM.SETTLEMENT, UILayer.Popup, false, (node) => {
+                const comp = node.getComponent(UISettlement);
+                if (comp) {
+                    comp.show(true, this._logic.score, () => this.onRestart());
+                }
+            });
         } else {
             this._state = MergeGameState.IDLE;
         }
+    }
+
+    /**
+     * 重新开始
+     */
+    protected onRestart(): void {
+        this._logic.initGrid();
+        this._state = MergeGameState.IDLE;
+        this._isAutoPlaying = false;
+        this.updateAutoButtonUI();
+
+        if (this.scoreLabel) {
+            this.scoreLabel.string = "Score: 0";
+        }
+
+        // 清理旧方块
+        this.gameArea.removeAllChildren();
+        this._squares = [];
+
+        this.initView();
     }
 
     /**

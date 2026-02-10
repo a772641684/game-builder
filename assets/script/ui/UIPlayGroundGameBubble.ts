@@ -1,6 +1,8 @@
+import { UI_ENUM } from "../enums/UIEnum";
 import { BubbleControl } from "../logic/BubbleControl";
 import { GameCenter } from "../logic/GameCenter";
 import { Loader } from "../logic/Loader";
+import { UILayer, UIManager } from "../logic/UIManager";
 import PrefabGameBubble from "../prefab/PrefabGameBubble";
 import UISettlement from "./UISettlement";
 
@@ -10,7 +12,6 @@ const { ccclass, property } = cc._decorator;
  * 泡泡龙消消乐主界面
  * [Prefab 结构说明]
  * - UIPlayGroundGameBubble (挂载此脚本)
- *   - Settlement (挂载 UISettlement)
  *   - GameArea (cc.Node)
  *     - Cannon (cc.Node)
  *       - Shooter (cc.Sprite)
@@ -34,14 +35,15 @@ export default class UIPlayGroundGameBubble extends cc.Component {
     @property(cc.Label)
     scoreLabel: cc.Label = null;
 
-    @property(UISettlement)
-    settlement: UISettlement = null;
-
     @property(cc.Prefab)
     bubblePrefab: cc.Prefab = null;
 
+    @property(cc.Graphics)
+    predictionLine: cc.Graphics = null;
+
     private _isShooting: boolean = false;
     private _nextColor: number = 0;
+    private _bulletColor: number = 0;
     private _bubbleNodes: (cc.Node | null)[][] = [];
     private _currentBullet: cc.Node = null;
 
@@ -51,6 +53,13 @@ export default class UIPlayGroundGameBubble extends cc.Component {
     onLoad() {
         const manager = cc.director.getPhysicsManager();
         manager.enabled = true;
+
+        if (!this.predictionLine) {
+            let node = new cc.Node("PredictionLine");
+            node.parent = this.node;
+            node.zIndex = -1;
+            this.predictionLine = node.addComponent(cc.Graphics);
+        }
 
         BubbleControl.getInstance().onScoreChanged = (score: number) => {
             if (this.scoreLabel) {
@@ -99,7 +108,14 @@ export default class UIPlayGroundGameBubble extends cc.Component {
      */
     private _prepareNextBubble() {
         this._isShooting = false;
-        this._nextColor = Math.floor(Math.random() * 6) + 1; // 1-6
+
+        // 如果没有下个颜色，先初始化
+        if (this._nextColor === 0) {
+            this._nextColor = Math.floor(Math.random() * 6) + 1;
+        }
+
+        this._bulletColor = this._nextColor;
+        this._nextColor = Math.floor(Math.random() * 6) + 1; // 预准备下一个颜色
 
         if (this.bubblePrefab) {
             const node = Loader.instance.instantiate(this.bubblePrefab);
@@ -107,11 +123,14 @@ export default class UIPlayGroundGameBubble extends cc.Component {
             node.position = this.shooter.position;
             const ctrl = node.getComponent(PrefabGameBubble);
             if (ctrl) {
-                ctrl.init(this._nextColor, true);
+                ctrl.init(this._bulletColor, true);
                 // 设置子弹击中逻辑
                 ctrl.onCollisionWithTarget = () => this._onBulletHit();
             }
             this._currentBullet = node;
+
+            // 准星归零并显示预测线
+            this.predictionLine.clear();
         }
     }
 
@@ -143,8 +162,13 @@ export default class UIPlayGroundGameBubble extends cc.Component {
 
             if (r >= config.rows - 1) {
                 // [US3] 到达底部，游戏结束 (失败)
-                this.settlement.show(false, BubbleControl.instance.getScore(), () => {
-                    this.onRestart();
+                UIManager.instance.openUI(UI_ENUM.SETTLEMENT, UILayer.Popup, false, (node) => {
+                    const comp = node.getComponent(UISettlement);
+                    if (comp) {
+                        comp.show(false, BubbleControl.instance.getScore(), () => {
+                            this.onRestart();
+                        });
+                    }
                 });
                 return;
             }
@@ -176,10 +200,18 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         matches.forEach((m) => {
             const node = this._bubbleNodes[m.r][m.c];
             if (node) {
-                node.destroy();
+                // 消除动效
+                cc.tween(node)
+                    .to(0.1, { scale: 1.2 })
+                    .to(0.1, { scale: 0, opacity: 0 })
+                    .call(() => node.destroy())
+                    .start();
                 this._bubbleNodes[m.r][m.c] = null;
             }
         });
+
+        // 震屏效果
+        this.shakeNode(this.bubbleContainer);
 
         // 检查悬空
         const islands = BubbleControl.instance.checkIslands();
@@ -188,7 +220,8 @@ export default class UIPlayGroundGameBubble extends cc.Component {
             if (node) {
                 // 播放掉落动画 (宪法 VII)
                 cc.tween(node)
-                    .to(0.5, { y: node.y - 1000, opacity: 0 })
+                    .delay(0.1)
+                    .to(0.5, { y: node.y - 1000, opacity: 0 }, { easing: "sineIn" })
                     .call(() => node.destroy())
                     .start();
                 this._bubbleNodes[m.r][m.c] = null;
@@ -197,12 +230,30 @@ export default class UIPlayGroundGameBubble extends cc.Component {
 
         // [US3] 结束检查 - 胜利
         if (BubbleControl.instance.getMatrix().every((row) => row.every((cell) => cell === 0))) {
-            this.settlement.show(true, BubbleControl.instance.getScore(), () => {
-                this.onRestart();
+            UIManager.instance.openUI(UI_ENUM.SETTLEMENT, UILayer.Popup, false, (node) => {
+                const comp = node.getComponent(UISettlement);
+                if (comp) {
+                    comp.show(true, BubbleControl.instance.getScore(), () => {
+                        this.onRestart();
+                    });
+                }
             });
         } else {
             this._prepareNextBubble();
         }
+    }
+
+    /**
+     * 节点震动效果
+     */
+    private shakeNode(node: cc.Node) {
+        const startPos = node.position;
+        cc.tween(node)
+            .by(0.05, { position: cc.v3(5, 5, 0) })
+            .by(0.05, { position: cc.v3(-10, -10, 0) })
+            .by(0.05, { position: cc.v3(5, 5, 0) })
+            .set({ position: startPos })
+            .start();
     }
 
     /**
@@ -213,7 +264,6 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         this.bubbleContainer.removeAllChildren();
         this._initGridNodes();
         this._prepareNextBubble();
-        this.settlement.node.active = false;
     }
 
     /**
@@ -227,13 +277,18 @@ export default class UIPlayGroundGameBubble extends cc.Component {
 
         const node = Loader.instance.instantiate(this.bubblePrefab);
         node.parent = this.bubbleContainer;
-        node.position = BubbleControl.instance.gridToWorld(r, c);
+        const targetPos = BubbleControl.instance.gridToWorld(r, c);
+        node.position = targetPos;
 
         const ctrl = node.getComponent(PrefabGameBubble);
         if (ctrl) {
             ctrl.init(color, false);
         }
         this._bubbleNodes[r][c] = node;
+
+        // 生成动效
+        node.scale = 0;
+        cc.tween(node).to(0.15, { scale: 1.0 }, { easing: "backOut" }).start();
     }
 
     /**
@@ -245,11 +300,69 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         const touchPos = event.getLocation();
         const localPos = this.node.convertToNodeSpaceAR(touchPos);
         const shooterPos = cc.v2(this.shooter.x, this.shooter.y);
-        const dir = localPos.sub(shooterPos);
+        const dir = localPos.sub(shooterPos).normalize();
+
+        // 限制射击角度，防止往后射
+        if (dir.y < 0.2) return;
 
         // 计算旋转角度 (0度朝右, Cocos 角度是顺时针)
         let angle = Math.atan2(dir.y, dir.x) * (180 / Math.PI);
-        this.shooter.angle = angle - 90; // Cocos 控制 0 度朝上需要 -90
+        this.shooter.angle = angle - 90;
+
+        this._drawPredictionLine(shooterPos, dir);
+    }
+
+    /**
+     * 绘制预测射线
+     */
+    private _drawPredictionLine(start: cc.Vec2, direction: cc.Vec2) {
+        if (!this.predictionLine) return;
+
+        this.predictionLine.clear();
+        this.predictionLine.strokeColor = cc.Color.WHITE.clone();
+        this.predictionLine.strokeColor.a = 150;
+        this.predictionLine.lineWidth = 4;
+
+        let currentPos = start.clone();
+        let currentDir = direction.clone();
+
+        // 游戏区域边界 (根据配置粗略估算或使用固定值)
+        const wallX = 320; // 假设宽度 640
+        const maxY = 500;
+
+        this.predictionLine.moveTo(currentPos.x, currentPos.y);
+
+        for (let i = 0; i < 3; i++) {
+            // 最多折射 3 次
+            // 计算与左右墙壁的碰撞
+            let nextX = currentDir.x > 0 ? wallX : -wallX;
+            let distToWall = (nextX - currentPos.x) / currentDir.x;
+
+            // 简单处理：如果 distToWall 很大说明几乎垂直
+            if (distToWall < 0) distToWall = 1000;
+
+            // 假设我们只关心折射
+            let step = Math.min(distToWall, 1000);
+            let targetPos = currentPos.add(currentDir.mul(step));
+
+            if (targetPos.y > maxY) {
+                // 碰到顶部或足够高了
+                let ratio = (maxY - currentPos.y) / (targetPos.y - currentPos.y);
+                targetPos = currentPos.add(currentDir.mul(step * ratio));
+                this.predictionLine.lineTo(targetPos.x, targetPos.y);
+                break;
+            }
+
+            this.predictionLine.lineTo(targetPos.x, targetPos.y);
+
+            // 反射
+            currentPos = targetPos;
+            currentDir.x *= -1;
+
+            if (i === 2) break;
+        }
+
+        this.predictionLine.stroke();
     }
 
     /**
@@ -258,13 +371,20 @@ export default class UIPlayGroundGameBubble extends cc.Component {
     private onTouchEnd(event: cc.Event.EventTouch) {
         if (this._isShooting || !this._currentBullet) return;
 
-        this._isShooting = true;
         const touchPos = event.getLocation();
         const localPos = this.node.convertToNodeSpaceAR(touchPos);
         const shooterPos = cc.v2(this.shooter.x, this.shooter.y);
         const dir = localPos.sub(shooterPos).normalize();
 
-        const speed = 1200;
+        if (dir.y < 0.2) return;
+
+        this._isShooting = true;
+        this.predictionLine.clear();
+
+        // 射击动效：发射器弹一下
+        cc.tween(this.shooter).to(0.05, { scale: 0.8 }).to(0.15, { scale: 1.0 }, { easing: "backOut" }).start();
+
+        const speed = BubbleControl.instance.config.shootSpeed || 1500;
         const rb = this._currentBullet.getComponent(cc.RigidBody);
         if (rb) {
             rb.linearVelocity = cc.v2(dir.x * speed, dir.y * speed);

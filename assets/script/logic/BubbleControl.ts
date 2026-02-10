@@ -1,4 +1,5 @@
 import { Singleton } from "../../ace/logic/Singleton";
+import { DEFAULT_BUBBLE_CONFIG, IBubbleConfig } from "../config/GameConfig";
 import { DifficultyManager } from "./DifficultyManager";
 import { LevelGenerator } from "./LevelGenerator";
 import { Logger } from "./Logger";
@@ -32,36 +33,6 @@ export interface BubbleData {
     /** 当前状态 */
     state: BubbleState;
 }
-
-/**
- * 泡泡龙标准化配置接口
- */
-export interface IBubbleConfig {
-    /** 发射速度 */
-    shootSpeed: number;
-    /** 最小消除数量 */
-    popMinCount: number;
-    /** 射击冷却时间 (ms) */
-    cooldown: number;
-    /** 网格行数 */
-    rows: number;
-    /** 网格列数 */
-    cols: number;
-    /** 泡泡直径/间距 */
-    bubbleSize: number;
-}
-
-/**
- * 泡泡龙默认配置
- */
-export const DEFAULT_BUBBLE_CONFIG: Readonly<IBubbleConfig> = {
-    shootSpeed: 2000,
-    popMinCount: 3,
-    cooldown: 400,
-    rows: 10,
-    cols: 8,
-    bubbleSize: 60,
-};
 
 /**
  * 泡泡龙核心逻辑控制器

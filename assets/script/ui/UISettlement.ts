@@ -23,6 +23,9 @@ export default class UISettlement extends cc.Component {
     @property(cc.Label)
     scoreLabel: cc.Label = null;
 
+    @property(cc.Node)
+    container: cc.Node = null;
+
     private _restartCallback: Function = null;
 
     /**
@@ -33,7 +36,20 @@ export default class UISettlement extends cc.Component {
      */
     public show(isWin: boolean, score: number, onRestart: Function) {
         this.node.active = true;
+        if (this.container) {
+            this.container.scale = 0.5;
+            this.container.opacity = 0;
+            cc.tween(this.container).to(0.3, { scale: 1.0, opacity: 255 }, { easing: "backOut" }).start();
+        }
+
         const gameId = GameCenter.instance.currentSubGameId;
+        if (!gameId) {
+            this.titleLabel.string = isWin ? "游戏胜利！" : "游戏结束";
+            this.scoreLabel.string = `得分: ${score}`;
+            this._restartCallback = onRestart;
+            return;
+        }
+
         const level = DifficultyManager.instance.getCurrentLevel(gameId);
 
         // 计算倍率
