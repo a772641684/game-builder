@@ -99,6 +99,90 @@ export const DEFAULT_BUBBLE_CONFIG: Readonly<IBubbleConfig> = {
 };
 
 /**
+ * 涂鸦跳跃游戏配置接口
+ */
+export interface IDoodleConfig {
+    /** 跳跃初速度 (像素/秒) */
+    jumpSpeed: number;
+    /** 重力加速度 (像素/秒²) */
+    gravity: number;
+    /** 左右移动速度 (像素/秒) */
+    moveSpeed: number;
+    /** 屏幕半宽 (角色穿越边界范围) */
+    halfWidth: number;
+    /** 平台宽度 */
+    platformWidth: number;
+    /** 平台高度 */
+    platformHeight: number;
+    /** 普通平台最小间距 */
+    gapMin: number;
+    /** 普通平台最大间距 */
+    gapMax: number;
+    /** 破碎平台概率 (0-1) */
+    breakableChance: number;
+    /** 弹簧平台概率 (0-1) */
+    springChance: number;
+    /** 弹簧跳跃速度倍率 */
+    springMultiplier: number;
+    /** 移动平台概率 (0-1) */
+    movingChance: number;
+    /** 移动平台速度 (像素/秒) */
+    movingSpeed: number;
+    /** 金币出现概率 (0-1) */
+    coinChance: number;
+    /** 金币分值 */
+    coinScore: number;
+    /** 视野上方预生成距离 */
+    spawnAhead: number;
+    /** 视野下方回收距离 */
+    recycleBelow: number;
+    /** 每批生成平台数量 */
+    batchCount: number;
+    /** 角色宽度 */
+    playerWidth: number;
+    /** 角色高度 */
+    playerHeight: number;
+    /** 摄像机跟随偏移 (角色在屏幕下方的位置，正数=画面偏下) */
+    cameraOffset: number;
+    /** 摄像机平滑跟随系数 (0~1, 越大越快) */
+    cameraSmooth: number;
+    /** 死亡判定: 角色低于摄像机多少即判定死亡 */
+    deathThreshold: number;
+    /** 推进线下降速度 (像素/秒, 0=不启用) */
+    pushLineSpeed: number;
+}
+
+/**
+ * 涂鸦跳跃默认配置
+ */
+export const DEFAULT_DOODLE_CONFIG: Readonly<IDoodleConfig> = {
+    jumpSpeed: 1300,
+    gravity: 2200,
+    moveSpeed: 600,
+    halfWidth: 420,
+    platformWidth: 120,
+    platformHeight: 24,
+    gapMin: 80,
+    gapMax: 180,
+    breakableChance: 0.1,
+    springChance: 0.08,
+    springMultiplier: 1.6,
+    movingChance: 0.12,
+    movingSpeed: 80,
+    coinChance: 0.25,
+    coinScore: 30,
+    spawnAhead: 1200,
+    recycleBelow: 600,
+    batchCount: 15,
+    playerWidth: 50,
+    playerHeight: 50,
+    cameraOffset: 100,
+    cameraSmooth: 0.18,
+    deathThreshold: 650,
+    pushLineSpeed: 6,
+};
+
+/**
  * 打地鼠游戏配置接口
  */
 export interface IWhackMoleConfig {

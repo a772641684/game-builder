@@ -30,20 +30,30 @@ export default class PrefabGameBubble extends cc.Component {
             rb.type = isBullet ? cc.RigidBodyType.Dynamic : cc.RigidBodyType.Static;
             rb.enabledContactListener = isBullet;
         }
+
+        // 子弹需要完美弹性反弹 (墙壁反射)
+        if (isBullet) {
+            const col = this.node.getComponent(cc.PhysicsCircleCollider);
+            if (col) {
+                col.restitution = 1.0;
+                col.friction = 0;
+                col.apply();
+            }
+        }
     }
 
     /**
-     * 更新组件颜色表现
+     * 更新组件颜色表现 (柔和色系，视觉效果更佳)
      */
     private _updateAppearance() {
-        const colors = [
+        const colors: cc.Color[] = [
             cc.Color.WHITE, // 0 - 空
-            cc.Color.RED, // 1
-            cc.Color.GREEN, // 2
-            cc.Color.BLUE, // 3
-            cc.Color.YELLOW, // 4
-            cc.Color.MAGENTA, // 5
-            cc.Color.CYAN, // 6
+            cc.color(230, 60, 60), // 1 - 红
+            cc.color(60, 200, 80), // 2 - 绿
+            cc.color(60, 120, 240), // 3 - 蓝
+            cc.color(245, 210, 40), // 4 - 黄
+            cc.color(200, 60, 220), // 5 - 紫
+            cc.color(40, 210, 225), // 6 - 青
         ];
         this.node.color = colors[this.colorType] || cc.Color.WHITE;
     }
