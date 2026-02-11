@@ -1,47 +1,33 @@
+import { FloorPlatformType } from "../logic/FloorControl";
+
 const { ccclass, property } = cc._decorator;
 
 /**
- * 下一百层 - 跳板组件
+ * 下一百层 - 跳板组件 (已废弃物理碰撞)
+ * 碰撞检测已迁移到 FloorControl 手动 AABB 碰撞
+ * 此组件保留用于 Prefab 兼容和类型标记
+ *
  * [Prefab 结构说明]
- * - FloorRoot (挂载此脚本, cc.PhysicsBoxCollider)
- *   - Visual (cc.Sprite)
- *   - Spike (cc.PhysicsBoxCollider, cc.Sprite, 可选)
+ * - FloorRoot (挂载此脚本)
+ *   - Visual (cc.Graphics, 由 UIPlayGroundGameFloor 代码绘制)
  */
 @ccclass
 export default class PrefabGameFloorItem extends cc.Component {
     @property({ tooltip: "跳板类型: 0-普通, 1-尖刺, 2-易碎, 3-传送带" })
     type: number = 0;
 
-    @property({ type: cc.Node, tooltip: "节点路径: Spike" })
-    spikeNode: cc.Node = null;
-
-    onLoad() {
-        this.initType(this.type);
-    }
-
-    public initType(type: number) {
+    /**
+     * 初始化跳板类型
+     * @param type 平台类型 (FloorPlatformType 枚举值)
+     */
+    public initType(type: number): void {
         this.type = type;
-        if (this.spikeNode) {
-            this.spikeNode.active = type === 1;
-        }
-
-        // 逻辑属性设置
-        const collider = this.getComponent(cc.PhysicsBoxCollider);
-        if (collider) {
-            collider.sensor = false;
-        }
     }
 
     /**
-     * 当角色踩到板上的反馈
+     * 获取平台类型枚举
      */
-    public onStep() {
-        if (this.type === 2) {
-            // 易碎板
-            cc.tween(this.node)
-                .to(0.2, { opacity: 0 })
-                .call(() => (this.node.active = false))
-                .start();
-        }
+    public getPlatformType(): FloorPlatformType {
+        return this.type as FloorPlatformType;
     }
 }

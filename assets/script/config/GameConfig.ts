@@ -249,6 +249,84 @@ export const DEFAULT_BOUNCY_CONFIG: Readonly<IBouncyConfig> = {
 };
 
 /**
+ * 下一百层游戏配置接口
+ */
+export interface IFloorConfig {
+    /** 游戏区域半宽 */
+    areaHalfWidth: number;
+    /** 游戏区域半高 */
+    areaHalfHeight: number;
+    /** 角色宽度 */
+    playerWidth: number;
+    /** 角色高度 */
+    playerHeight: number;
+    /** 角色左右移动速度 (像素/秒) */
+    playerMoveSpeed: number;
+    /** 重力加速度 (像素/秒², 正值向下) */
+    gravity: number;
+    /** 角色最大下落速度 (像素/秒) */
+    maxFallSpeed: number;
+    /** 平台宽度 */
+    platformWidth: number;
+    /** 平台高度 */
+    platformHeight: number;
+    /** 平台上升速度 (像素/秒, 正值=向上移动) */
+    platformRiseSpeed: number;
+    /** 平台垂直间距 (两平台之间) */
+    platformGapY: number;
+    /** 平台最大水平偏移 (相对于区域中心) */
+    platformMaxOffsetX: number;
+    /** 尖刺平台概率 (0-1) */
+    spikeChance: number;
+    /** 易碎平台概率 (0-1) */
+    breakableChance: number;
+    /** 传送带平台概率 (0-1) */
+    conveyorChance: number;
+    /** 传送带水平推力速度 (像素/秒) */
+    conveyorSpeed: number;
+    /** 天花板伤害 — 角色被挤到顶部时直接死亡 */
+    ceilingKills: boolean;
+    /** 初始生命数 */
+    lives: number;
+    /** 每安全通过一层的基础得分 */
+    baseScore: number;
+    /** 连续安全通过奖励分 (每层递增) */
+    comboBonus: number;
+    /** 初始生成平台数量 */
+    initialPlatformCount: number;
+    /** 角色踩到尖刺后的无敌时间 (秒) */
+    invincibleDuration: number;
+}
+
+/**
+ * 下一百层默认配置
+ */
+export const DEFAULT_FLOOR_CONFIG: Readonly<IFloorConfig> = {
+    areaHalfWidth: 370,
+    areaHalfHeight: 310,
+    playerWidth: 40,
+    playerHeight: 40,
+    playerMoveSpeed: 450,
+    gravity: 600,
+    maxFallSpeed: 500,
+    platformWidth: 140,
+    platformHeight: 18,
+    platformRiseSpeed: 80,
+    platformGapY: 100,
+    platformMaxOffsetX: 280,
+    spikeChance: 0.12,
+    breakableChance: 0.1,
+    conveyorChance: 0.08,
+    conveyorSpeed: 100,
+    ceilingKills: true,
+    lives: 3,
+    baseScore: 5,
+    comboBonus: 2,
+    initialPlatformCount: 7,
+    invincibleDuration: 1.5,
+};
+
+/**
  * 打地鼠游戏配置接口
  */
 export interface IWhackMoleConfig {
