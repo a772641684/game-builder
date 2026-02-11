@@ -33,10 +33,12 @@ export const UI_ENUM = {
     UNSCREW_PUZZLE: "ui/UIPlayGroundGameUnscrew",
     /** 羊了个羊类三消游戏 */
     SHEEP_MATCH: "ui/UIPlayGroundGameSheepMatch",
+    /** 打地鼠 */
+    WHACK_MOLE: "ui/UIPlayGroundGameWhackMole",
     /** 结算面板 */
     SETTLEMENT: "ui/UISettlement",
     /** 通用确认弹窗 */
     COMMON_DIALOG: "ui/CommonDialog",
-} as const;
+};
 
 export type UI_NAME = keyof typeof UI_ENUM;

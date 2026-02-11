@@ -34,6 +34,7 @@ export default class UIHome extends cc.Component {
         { id: "BUBBLE", title: "泡泡龙" },
         { id: "UNSCREW", title: "拆螺丝" },
         { id: "MERGE", title: "合成消消乐" },
+        { id: "WHACK_MOLE", title: "打地鼠" },
     ];
 
     protected onLoad() {

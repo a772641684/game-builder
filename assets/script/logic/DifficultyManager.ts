@@ -60,9 +60,12 @@ export class DifficultyManager extends Singleton<DifficultyManager> {
         this.registerProfile("FLOOR", { ...endlessProfile, baseRate: 0.05 });
         this.registerProfile("BOUNCY", { ...endlessProfile, baseRate: 0.07 });
 
+        // 打地鼠: 无尽模式, 速度随关卡提升
+        this.registerProfile("WHACK_MOLE", { ...endlessProfile, baseRate: 0.06 });
+
         this.registerProfile("default", defaultProfile);
 
-        Logger.getInstance().info("DifficultyManager", "11 款游戏难度特性配置已完成 (ID 已对齐)");
+        Logger.getInstance().info("DifficultyManager", "12 款游戏难度特性配置已完成 (ID 已对齐)");
     }
 
     /**

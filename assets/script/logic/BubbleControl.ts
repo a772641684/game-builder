@@ -131,7 +131,11 @@ export class BubbleControl extends Singleton<BubbleControl> {
      */
     public gridToWorld(row: number, col: number): cc.Vec3 {
         const d = this._config.bubbleSize;
-        const x = col * d + (row % 2 === 1 ? d / 2 : 0);
+        const totalWidth = this._config.cols * d;
+        // 居中偏移：减去总宽度的一半，再加上半个球的半径对齐
+        const offsetX = -totalWidth / 2 + d / 2;
+
+        const x = offsetX + col * d + (row % 2 === 1 ? d / 2 : 0);
         const y = -row * (d * 0.866);
         return cc.v3(x, y, 0);
     }
@@ -142,8 +146,11 @@ export class BubbleControl extends Singleton<BubbleControl> {
      */
     public worldToGrid(pos: cc.Vec2 | cc.Vec3): { r: number; c: number } {
         const d = this._config.bubbleSize;
+        const totalWidth = this._config.cols * d;
+        const offsetX = -totalWidth / 2 + d / 2;
+
         const r = Math.round(-pos.y / (d * 0.866));
-        const c = Math.round((pos.x - (r % 2 === 1 ? d / 2 : 0)) / d);
+        const c = Math.round((pos.x - offsetX - (r % 2 === 1 ? d / 2 : 0)) / d);
         return { r, c };
     }
 

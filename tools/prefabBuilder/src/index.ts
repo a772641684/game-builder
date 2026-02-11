@@ -110,16 +110,55 @@ class PrefabBuilder {
         return finalRoot;
     }
 
-    private parseProperties(content: string): Map<string, string> {
-        const props = new Map<string, string>();
-        // 进一步优化正则：支持可选的 @property(...) 参数括号，并提取真正的变量名
+    private parseProperties(content: string): Map<string, { path: string; type: string }> {
+        const props = new Map<string, { path: string; type: string }>();
+
+        // 策略 1: 解析 JSDoc 中的 节点路径 + @property(Type)
         const regex =
-            /\/\*\*[\s\S]*?节点路径[:：]\s*([^\n\*]*)\s*[\s\S]*?\*\/[\s\S]*?@property(?:\([\s\S]*?\))?\s*(?:public|private|protected)?\s*(\w+)\s*[:=]/g;
+            /\/\*\*[\s\S]*?节点路径[:：]\s*([^\n\*]*)\s*[\s\S]*?\*\/[\s\S]*?@property\(([^)]+)\)\s*(?:public|private|protected)?\s*(\w+)\s*[:=]/g;
         let m;
         while ((m = regex.exec(content)) !== null) {
-            console.log(`[PrefabBuilder] 发现属性定义: ${m[2]} -> ${m[1].trim()}`);
-            props.set(m[2], m[1].trim());
+            const nodePath = m[1].trim();
+            const propType = m[2].trim();
+            const propName = m[3].trim();
+            console.log(`[PrefabBuilder] 发现属性定义: ${propName} -> 路径:${nodePath}, 类型:${propType}`);
+            props.set(propName, { path: nodePath, type: propType });
         }
+
+        // 策略 2: 解析 [Prefab 结构说明] 中的 -> propName 箭头语法 (如: ScoreLabel (cc.Label) -> scoreLabel)
+        const structMatch = content.match(/\[Prefab \u7ed3\u6784\u8bf4\u660e\][:：]?([\s\S]*?)\*\//);
+        if (structMatch) {
+            const arrowRegex = /^\s*-\s*(\S+)\s*\([^)]*\)\s*->\s*(\w+)/gm;
+            let am;
+            while ((am = arrowRegex.exec(structMatch[1])) !== null) {
+                const nodeName = am[1].trim();
+                const propName = am[2].trim();
+                if (!props.has(propName)) {
+                    // 尝试从 @property 提取类型
+                    const typeRegex = new RegExp(
+                        `@property\\(([^)]+)\\)\\s*(?:public|private|protected)?\\s*${propName}\\s*[:=]`
+                    );
+                    const typeMatch = content.match(typeRegex);
+                    const propType = typeMatch ? typeMatch[1].trim() : "cc.Node";
+                    console.log(`[PrefabBuilder] 箭头绑定: ${propName} -> 路径:${nodeName}, 类型:${propType}`);
+                    props.set(propName, { path: nodeName, type: propType });
+                }
+            }
+        }
+
+        // 策略 3: 解析 @property(cc.Prefab) 或 @property({ type: cc.Prefab }) 的 预制体: 标注
+        const prefabRegex =
+            /\/\*\*[\s\S]*?预制体[:：]\s*([^\n\*]*)\s*[\s\S]*?\*\/[\s\S]*?@property\((?:cc\.Prefab|\{[^}]*type:\s*cc\.Prefab[^}]*\})\)\s*(?:public|private|protected)?\s*(\w+)\s*[:=]/g;
+        let pm;
+        while ((pm = prefabRegex.exec(content)) !== null) {
+            const prefabRef = pm[1].trim();
+            const propName = pm[2].trim();
+            if (!props.has(propName)) {
+                console.log(`[PrefabBuilder] 发现预制体属性: ${propName} -> 预制体:${prefabRef}`);
+                props.set(propName, { path: prefabRef, type: "cc.Prefab" });
+            }
+        }
+
         return props;
     }
 
@@ -134,7 +173,7 @@ class PrefabBuilder {
     private syncPrefab(
         json: any[],
         structure: INodeStructure,
-        properties: Map<string, string>,
+        properties: Map<string, { path: string; type: string }>,
         scriptUuid: string,
         prefabUuid: string
     ) {
@@ -142,8 +181,10 @@ class PrefabBuilder {
         const prefabRoot = json[0];
         json.length = 1;
 
-        // 路径映射：用于属性绑定
+        // 路径映射：用于属性绑定 (完整路径 -> nodeId)
         const pathMap = new Map<string, number>();
+        // 短名映射：用于简化查找 (节点名 -> nodeId)
+        const nameMap = new Map<string, number>();
 
         // 2. 递归构建节点树
         const build = (nodeStruct: INodeStructure, parentId: number, currentPath: string): number => {
@@ -176,6 +217,51 @@ class PrefabBuilder {
             };
             json.push(node);
             pathMap.set(nodePath, nodeId);
+            // 同时记录短名映射 (如果重名则后者覆盖，但通常同一层不会重名)
+            nameMap.set(nodeName, nodeId);
+
+            // ===== 解析布局提示 (Layout Hints) =====
+            const rawDesc = nodeStruct.name;
+
+            // pos(x, y) -> 设置 _trs 前两个值
+            const posMatch = rawDesc.match(/pos\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)/);
+            if (posMatch) {
+                node._trs.array[0] = parseFloat(posMatch[1]);
+                node._trs.array[1] = parseFloat(posMatch[2]);
+            }
+
+            // size(w, h) -> 设置 _contentSize
+            const sizeMatch = rawDesc.match(/size\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)/);
+            if (sizeMatch) {
+                node._contentSize.width = parseFloat(sizeMatch[1]);
+                node._contentSize.height = parseFloat(sizeMatch[2]);
+            }
+
+            // color(r, g, b) -> 设置 _color
+            const colorMatch = rawDesc.match(/color\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+            if (colorMatch) {
+                node._color.r = parseInt(colorMatch[1]);
+                node._color.g = parseInt(colorMatch[2]);
+                node._color.b = parseInt(colorMatch[3]);
+            }
+
+            // opacity(n) -> 设置 _opacity
+            const opacityMatch = rawDesc.match(/opacity\(\s*(\d+)\s*\)/);
+            if (opacityMatch) {
+                node._opacity = parseInt(opacityMatch[1]);
+            }
+
+            // active=false -> 设置 _active
+            if (rawDesc.includes("active=false")) {
+                node._active = false;
+            }
+
+            // anchor(x, y) -> 设置 _anchorPoint
+            const anchorMatch = rawDesc.match(/anchor\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)/);
+            if (anchorMatch) {
+                node._anchorPoint.x = parseFloat(anchorMatch[1]);
+                node._anchorPoint.y = parseFloat(anchorMatch[2]);
+            }
 
             // 检查是否挂载脚本
             if (nodeStruct.name.includes("挂载此脚本")) {
@@ -205,7 +291,7 @@ class PrefabBuilder {
                     _dstBlendFactor: 771,
                     _spriteFrame: { __uuid__: "a23235d1-15db-4b95-8439-a2e005bfff91" },
                     _type: 0,
-                    _sizeMode: 0,
+                    _sizeMode: 0, // CUSTOM - 使用节点的 contentSize
                     _fillType: 0,
                     _fillCenter: { __type__: "cc.Vec2", x: 0, y: 0 },
                     _fillStart: 0,
@@ -217,13 +303,64 @@ class PrefabBuilder {
                 node._components.push({ __id__: spriteId });
             }
 
+            // 检查 Widget 拉伸提示: widget(stretch) -> 四方贴合父节点
+            if (nodeStruct.name.includes("widget(stretch)")) {
+                const widgetId = json.length;
+                json.push({
+                    __type__: "cc.Widget",
+                    _name: "",
+                    _objFlags: 0,
+                    node: { __id__: nodeId },
+                    _enabled: true,
+                    alignMode: 1,
+                    _target: null,
+                    _alignFlags: 45,
+                    _left: 0,
+                    _right: 0,
+                    _top: 0,
+                    _bottom: 0,
+                    _verticalCenter: 0,
+                    _horizontalCenter: 0,
+                    _isAbsLeft: true,
+                    _isAbsRight: true,
+                    _isAbsTop: true,
+                    _isAbsBottom: true,
+                    _isAbsHorizontalCenter: true,
+                    _isAbsVerticalCenter: true,
+                    _originalWidth: node._contentSize.width,
+                    _originalHeight: node._contentSize.height,
+                    _id: "",
+                });
+                node._components.push({ __id__: widgetId });
+            }
+
             // 检查常用组件：Label
             if (nodeStruct.name.includes("cc.Label")) {
                 const labelId = json.length;
                 let textValue = "Label";
+                // 解析文本提示: text("...") 或旧版 文本/text 语法
+                const textHintMatch = nodeStruct.name.match(/text\(\s*["']([^"']*)["']\s*\)/);
                 const textMatch = nodeStruct.name.match(/[文本|text][:：]\s*["'＂]([^"'＂]*)/);
-                if (textMatch) {
+                if (textHintMatch) {
+                    textValue = textHintMatch[1];
+                } else if (textMatch) {
                     textValue = textMatch[1];
+                }
+
+                // 解析字号: fontSize(n)
+                let fontSize = 40;
+                const fontSizeMatch = nodeStruct.name.match(/fontSize\(\s*(\d+)\s*\)/);
+                if (fontSizeMatch) {
+                    fontSize = parseInt(fontSizeMatch[1]);
+                }
+
+                // 解析字体颜色: fontColor(r,g,b) — 仅当无 color() 时修改节点颜色
+                // 如果同时有 color() 和 fontColor()，color() 保留给 Sprite 着色，fontColor 不覆盖
+                const fontColorMatch = nodeStruct.name.match(/fontColor\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+                if (fontColorMatch && !colorMatch) {
+                    node._color.r = parseInt(fontColorMatch[1]);
+                    node._color.g = parseInt(fontColorMatch[2]);
+                    node._color.b = parseInt(fontColorMatch[3]);
                 }
 
                 json.push({
@@ -232,11 +369,11 @@ class PrefabBuilder {
                     _objFlags: 0,
                     node: { __id__: nodeId },
                     _enabled: true,
-                    _useOriginalSize: true,
+                    _useOriginalSize: false,
                     _string: textValue,
                     _N$string: textValue,
-                    _fontSize: 40,
-                    _lineHeight: 40,
+                    _fontSize: fontSize,
+                    _lineHeight: fontSize,
                     _enableWrapText: true,
                     _N$file: null,
                     _isSystemFontUsed: true,
@@ -277,7 +414,53 @@ class PrefabBuilder {
             }
 
             // 检查常用组件：Button
-            if (nodeStruct.name.includes("cc.Button") || nodeStruct.name.includes("Button")) {
+            if (
+                nodeStruct.name.includes("cc.Button") ||
+                (nodeName.startsWith("Btn") && !nodeStruct.name.includes("cc.Label"))
+            ) {
+                // Button 节点需要一个 Sprite 背景 (如果还没有 Sprite)
+                if (!nodeStruct.name.includes("cc.Sprite")) {
+                    const bgSpriteId = json.length;
+                    json.push({
+                        __type__: "cc.Sprite",
+                        _name: "",
+                        _objFlags: 0,
+                        node: { __id__: nodeId },
+                        _enabled: true,
+                        _materials: [{ __uuid__: "eca5d2f2-8ef6-41c2-bbe6-f9c79d09c432" }],
+                        _srcBlendFactor: 770,
+                        _dstBlendFactor: 771,
+                        _spriteFrame: { __uuid__: "a23235d1-15db-4b95-8439-a2e005bfff91" },
+                        _type: 0,
+                        _sizeMode: 0,
+                        _fillType: 0,
+                        _fillCenter: { __type__: "cc.Vec2", x: 0, y: 0 },
+                        _fillStart: 0,
+                        _fillRange: 0,
+                        _isTrimmedMode: true,
+                        _atlas: null,
+                        _id: "",
+                    });
+                    node._components.push({ __id__: bgSpriteId });
+                }
+
+                // 生成点击事件: BtnBack -> onBtnBackClicked
+                const clickEvents: any[] = [];
+                if (nodeName.startsWith("Btn")) {
+                    const suffix = nodeName.substring(3); // "Back", "Restart" 等
+                    const handler = `on${nodeName}Clicked`;
+                    // 在 Cocos 2.3.x 中， clickEvents 绑定根节点上挂载的脚本组件
+                    clickEvents.push({
+                        __type__: "cc.ClickEvent",
+                        target: { __id__: 1 }, // 根节点
+                        component: "", // 组件名由 Cocos 自动解析
+                        _componentId: scriptUuid, // 直接指向脚本组件 UUID
+                        handler: handler,
+                        customEventData: "",
+                    });
+                    console.log(`[PrefabBuilder] 按钮事件: ${nodeName} -> ${handler}()`);
+                }
+
                 const buttonId = json.length;
                 json.push({
                     __type__: "cc.Button",
@@ -287,7 +470,7 @@ class PrefabBuilder {
                     _enabled: true,
                     duration: 0.1,
                     zoomScale: 1.1,
-                    clickEvents: [],
+                    clickEvents: clickEvents,
                     _N$transition: 3,
                     transition: 3,
                     _id: "",
@@ -448,33 +631,141 @@ class PrefabBuilder {
             }
         }
 
-        // 4. 绑定属性
+        // 4. 智能属性绑定 (支持跨层级路径 + 组件类型匹配)
         const scriptComp = json.find((obj) => obj.__type__ === scriptUuid);
         if (scriptComp) {
-            properties.forEach((pathOrAsset, propName) => {
+            properties.forEach(({ path: pathOrAsset, type: propType }, propName) => {
+                // cc.Prefab 类型: 通过 __uuid__ 绑定预制体资源文件
+                if (propType === "cc.Prefab") {
+                    const assetUuid = this.findPrefabAssetUuid(pathOrAsset);
+                    if (assetUuid) {
+                        scriptComp[propName] = { __uuid__: assetUuid };
+                        console.log(
+                            `[PrefabBuilder] 绑定预制体: ${propName} -> ${pathOrAsset} (${assetUuid.substring(0, 8)}...)`
+                        );
+                    } else {
+                        console.warn(`[PrefabBuilder] 未找到预制体资源: ${pathOrAsset}, 属性 ${propName} 未绑定`);
+                    }
+                    return;
+                }
+
                 if (pathOrAsset.includes(".prefab")) {
+                    // 绑定预制体资源 (兼容旧的路径格式)
                     const cleanPath = pathOrAsset.replace(/^Assets\//, "assets/");
                     const assetUuid = this.getAssetUuid(cleanPath);
                     if (assetUuid) {
                         scriptComp[propName] = { __uuid__: assetUuid };
+                        console.log(`[PrefabBuilder] 绑定资源: ${propName} -> ${cleanPath}`);
                     }
-                } else if (pathOrAsset.includes(",")) {
-                    const paths = pathOrAsset.split(",").map((p) => p.trim());
-                    scriptComp[propName] = paths
-                        .map((p) => {
-                            const targetId = pathMap.get(p);
-                            // 如果是绑定组件而非 Node，需要查找对应组件 ID
-                            return targetId ? this.getBindingValue(json, targetId, propName) : null;
-                        })
-                        .filter((v) => v);
-                } else {
-                    const targetId = pathMap.get(pathOrAsset);
-                    if (targetId) {
-                        scriptComp[propName] = this.getBindingValue(json, targetId, propName);
-                    }
+                    return;
                 }
+
+                // 查找目标节点: 优先完整路径 -> 然后短名 -> 然后遍历全路径尾部匹配
+                let targetId = this.resolveNodeId(pathOrAsset, pathMap, nameMap);
+
+                if (targetId === undefined) {
+                    console.warn(`[PrefabBuilder] 未找到节点: ${pathOrAsset}, 属性 ${propName} 未绑定`);
+                    return;
+                }
+
+                // 根据 @property 类型决定绑定到 Node 还是具体组件
+                const bindValue = this.getTypedBindingValue(json, targetId, propType);
+                scriptComp[propName] = bindValue;
+                console.log(
+                    `[PrefabBuilder] 绑定属性: ${propName} -> 节点[${targetId}] 类型:${propType} => __id__:${
+                        bindValue.__id__
+                    }`
+                );
             });
         }
+    }
+
+    /**
+     * 解析节点 ID: 支持完整路径/短名/尾部匹配
+     */
+    private resolveNodeId(
+        target: string,
+        pathMap: Map<string, number>,
+        nameMap: Map<string, number>
+    ): number | undefined {
+        // 1. 完整路径匹配
+        for (const [fullPath, id] of pathMap) {
+            if (fullPath === target) return id;
+        }
+        // 2. 短名匹配
+        if (nameMap.has(target)) return nameMap.get(target);
+        // 3. 路径尾部匹配 (如 "HUD/ScoreLabel" 匹配 "Root/HUD/ScoreLabel")
+        for (const [fullPath, id] of pathMap) {
+            if (fullPath.endsWith("/" + target) || fullPath.endsWith(target)) return id;
+        }
+        return undefined;
+    }
+
+    /**
+     * 根据 @property 类型智能返回绑定值
+     * - cc.Node -> 绑定到节点本身
+     * - cc.Label/cc.Sprite/cc.Button/cc.RigidBody 等 -> 绑定到该节点上的对应组件
+     * - 自定义组件 (UISettlement 等) -> 绑定到挂载的自定义组件
+     */
+    private getTypedBindingValue(json: any[], nodeId: number, propType: string): any {
+        // cc.Node 直接绑定节点
+        if (propType === "cc.Node") {
+            return { __id__: nodeId };
+        }
+
+        const node = json[nodeId];
+        if (!node || !node._components) {
+            return { __id__: nodeId };
+        }
+
+        // 内置组件类型映射
+        const builtinTypeMap: { [key: string]: string } = {
+            "cc.Label": "cc.Label",
+            "cc.Sprite": "cc.Sprite",
+            "cc.Button": "cc.Button",
+            "cc.Layout": "cc.Layout",
+            "cc.RigidBody": "cc.RigidBody",
+            "cc.Graphics": "cc.Graphics",
+            "cc.ScrollView": "cc.ScrollView",
+            "cc.EditBox": "cc.EditBox",
+            "cc.Toggle": "cc.Toggle",
+            "cc.ProgressBar": "cc.ProgressBar",
+            "cc.Slider": "cc.Slider",
+            "cc.Animation": "cc.Animation",
+            "cc.Widget": "cc.Widget",
+            "cc.PhysicsBoxCollider": "cc.PhysicsBoxCollider",
+            "cc.PhysicsCircleCollider": "cc.PhysicsCircleCollider",
+        };
+
+        const targetType = builtinTypeMap[propType];
+
+        // 遍历节点的组件列表查找匹配的组件
+        for (const compRef of node._components) {
+            const compId = compRef.__id__;
+            const comp = json[compId];
+            if (!comp) continue;
+
+            if (targetType) {
+                // 内置组件: 精确匹配 __type__
+                if (comp.__type__ === targetType) {
+                    return { __id__: compId };
+                }
+            } else {
+                // 自定义组件 (UISettlement 等): __type__ 是压缩 UUID
+                // 尝试通过组件名查找 UUID 并匹配
+                const scriptUuid = this.findScriptUuid(propType);
+                if (scriptUuid) {
+                    const compressedUuid = UuidUtils.compressUuid(scriptUuid);
+                    if (comp.__type__ === compressedUuid) {
+                        return { __id__: compId };
+                    }
+                }
+            }
+        }
+
+        // 未找到匹配组件，回退到绑定节点
+        console.warn(`[PrefabBuilder] 节点[${nodeId}] 上未找到类型 ${propType} 的组件，回退绑定节点`);
+        return { __id__: nodeId };
     }
 
     private mountComponent(json: any[], nodeId: number, compName: string, node: any) {
@@ -532,13 +823,54 @@ class PrefabBuilder {
         return null;
     }
 
-    private getBindingValue(json: any[], nodeId: number, propName: string): any {
-        // 这里只是简单示意：如果脚本需要的是 Node 就返回 Node，如果是组件就返回对应的组件 ID
-        // 在 Cocos 2.3.x Prefab 中，属性绑定直接指向相应的 __id__
-        // 如果是组件数组，则指向组件的 __id__
-        const node = json[nodeId];
-        // 假设通过类型检查或命名规则判断绑定类型
-        return { __id__: nodeId };
+    // getBindingValue 已重构为 getTypedBindingValue + resolveNodeId
+
+    /**
+     * 查找预制体资源的 UUID
+     * @param prefabRef 可以是：
+     *   - 完整相对路径: "assets/resources/prefabs/PrefabGameMoleHole.prefab"
+     *   - 预制体名称: "PrefabGameMoleHole"
+     *   - 简短路径: "prefabs/PrefabGameMoleHole"
+     */
+    private findPrefabAssetUuid(prefabRef: string): string | null {
+        // 如果是完整路径（包含 .prefab 后缀），直接查找
+        if (prefabRef.endsWith(".prefab")) {
+            return this.getAssetUuid(prefabRef);
+        }
+
+        // 按名称在常用预制体目录递归搜索
+        const fileName = prefabRef.includes("/") ? prefabRef.split("/").pop()! : prefabRef;
+        const searchDirs = [
+            path.resolve(this.workspaceRoot, "assets/resources/prefabs"),
+            path.resolve(this.workspaceRoot, "assets/resources/ui"),
+            path.resolve(this.workspaceRoot, "assets/resources"),
+            // 工具在 tools/prefabBuilder 下执行时的外部路径
+            path.resolve(this.workspaceRoot, "../../assets/resources/prefabs"),
+            path.resolve(this.workspaceRoot, "../../assets/resources/ui"),
+            path.resolve(this.workspaceRoot, "../../assets/resources"),
+        ];
+
+        const searchInDir = (dir: string): string | null => {
+            if (!fs.existsSync(dir)) return null;
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    const result = searchInDir(fullPath);
+                    if (result) return result;
+                } else if (entry.name === `${fileName}.prefab.meta`) {
+                    const meta = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
+                    return meta.uuid;
+                }
+            }
+            return null;
+        };
+
+        for (const dir of searchDirs) {
+            const uuid = searchInDir(dir);
+            if (uuid) return uuid;
+        }
+        return null;
     }
 
     private getAssetUuid(resPath: string): string | null {

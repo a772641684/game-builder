@@ -97,3 +97,36 @@ export const DEFAULT_BUBBLE_CONFIG: Readonly<IBubbleConfig> = {
     cols: 8,
     bubbleSize: 60,
 };
+
+/**
+ * 打地鼠游戏配置接口
+ */
+export interface IWhackMoleConfig {
+    /** 网格行数 */
+    rows: number;
+    /** 网格列数 */
+    cols: number;
+    /** 游戏时长 (秒) */
+    timeLimit: number;
+    /** 地鼠生成间隔 (秒) */
+    spawnInterval: number;
+    /** 地鼠停留时间 (秒) */
+    moleStayTime: number;
+    /** 同时最多出现的地鼠数 */
+    maxActiveMoles: number;
+    /** 每次击中基础分 */
+    baseScore: number;
+}
+
+/**
+ * 打地鼠默认配置
+ */
+export const DEFAULT_WHACK_MOLE_CONFIG: Readonly<IWhackMoleConfig> = {
+    rows: 3,
+    cols: 3,
+    timeLimit: 30,
+    spawnInterval: 0.8,
+    moleStayTime: 1.5,
+    maxActiveMoles: 3,
+    baseScore: 10,
+};

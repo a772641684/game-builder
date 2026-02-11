@@ -76,6 +76,10 @@ export class GameCenter extends Singleton<GameCenter> {
         }
 
         this._currentSubGameId = null;
+
+        // 清理所有弹窗层 (宪法 IV: UI 切换时需回收非 Base 层)
+        UIManager.instance.clearLayer(UILayer.Popup);
+
         UIManager.instance.openUI(UI_ENUM.HOME, UILayer.Base);
     }
 
@@ -109,6 +113,8 @@ export class GameCenter extends Singleton<GameCenter> {
                 return UI_ENUM.MERGE_GAME;
             case "SHEEP_MATCH":
                 return UI_ENUM.SHEEP_MATCH;
+            case "WHACK_MOLE":
+                return UI_ENUM.WHACK_MOLE;
             default:
                 return null;
         }

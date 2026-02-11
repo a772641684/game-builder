@@ -76,15 +76,6 @@ export class UIManager extends Singleton<UIManager> {
         cleanupBase: boolean = true,
         callback?: (node: cc.Node) => void
     ): void {
-        if (this._uiNodes.has(path)) {
-            const node = this._uiNodes.get(path);
-            if (node) {
-                node.active = true;
-                callback && callback(node);
-            }
-            return;
-        }
-
         const layerNode = this._layers.get(layer);
         if (!layerNode) {
             Logger.getInstance().error("UIManager", `未设置 UI 根节点或层级未初始化`);
@@ -93,6 +84,20 @@ export class UIManager extends Singleton<UIManager> {
 
         if (layer === UILayer.Base && cleanupBase) {
             this.clearLayer(UILayer.Base);
+        }
+
+        if (this._uiNodes.has(path)) {
+            const node = this._uiNodes.get(path);
+            // 防御性检查：缓存的节点是否仍然有效
+            if (node && node.isValid) {
+                node.active = true;
+                node.parent = layerNode; // 确保在正确的层级
+                callback && callback(node);
+                return;
+            }
+            // 节点已被销毁，清除无效缓存，重新加载
+            this._uiNodes.delete(path);
+            Logger.getInstance().warn("UIManager", `缓存节点已失效，重新加载: ${path}`);
         }
 
         Logger.getInstance().info("UIManager", `加载 UI: ${path}`);
@@ -129,14 +134,22 @@ export class UIManager extends Singleton<UIManager> {
      */
     public clearLayer(layer: UILayer): void {
         const layerNode = this._layers.get(layer);
-        if (layerNode) {
-            layerNode.removeAllChildren();
-            // 同步更新 _uiNodes Map
-            for (const [path, node] of this._uiNodes.entries()) {
-                if (node.parent === layerNode) {
-                    this._uiNodes.delete(path);
-                }
+        if (!layerNode) return;
+
+        // 先收集需要删除的缓存 key（节点销毁前，parent 还有效）
+        const keysToRemove: string[] = [];
+        for (const [path, node] of this._uiNodes.entries()) {
+            if (!node || !node.isValid || node.parent === layerNode) {
+                keysToRemove.push(path);
             }
+        }
+
+        // 销毁所有子节点
+        layerNode.removeAllChildren();
+
+        // 清理缓存
+        for (const key of keysToRemove) {
+            this._uiNodes.delete(key);
         }
     }
 

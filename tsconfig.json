@@ -9,5 +9,5 @@
         "outDir": "temp/vscode-dist",
         "forceConsistentCasingInFileNames": true
     },
-    "exclude": ["node_modules", "library", "local", "temp", "build", "settings"]
+    "exclude": ["node_modules", "library", "local", "temp", "build", "settings", "tools"]
 }

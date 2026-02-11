@@ -27,6 +27,7 @@ export default class PrefabGameBubble extends cc.Component {
 
         const rb = this.node.getComponent(cc.RigidBody);
         if (rb) {
+            rb.type = isBullet ? cc.RigidBodyType.Dynamic : cc.RigidBodyType.Static;
             rb.enabledContactListener = isBullet;
         }
     }

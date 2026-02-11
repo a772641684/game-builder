@@ -41,6 +41,9 @@ export default class UIPlayGroundGameBubble extends cc.Component {
     @property(cc.Graphics)
     predictionLine: cc.Graphics = null;
 
+    @property(cc.Graphics)
+    borderGraphics: cc.Graphics = null;
+
     private _isShooting: boolean = false;
     private _nextColor: number = 0;
     private _bulletColor: number = 0;
@@ -53,6 +56,7 @@ export default class UIPlayGroundGameBubble extends cc.Component {
     onLoad() {
         const manager = cc.director.getPhysicsManager();
         manager.enabled = true;
+        manager.gravity = cc.v2(0, 0);
 
         if (!this.predictionLine) {
             let node = new cc.Node("PredictionLine");
@@ -73,6 +77,7 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         BubbleControl.instance.startGame();
         this._initGridNodes();
         this._prepareNextBubble();
+        this._drawGameBorder();
 
         // 启用碰撞监听
         cc.director.getCollisionManager().enabled = true;
@@ -101,6 +106,41 @@ export default class UIPlayGroundGameBubble extends cc.Component {
                 }
             }
         }
+    }
+
+    /**
+     * 绘制游戏区域边框
+     */
+    private _drawGameBorder() {
+        if (!this.borderGraphics) {
+            let node = new cc.Node("BorderGraphics");
+            node.parent = this.bubbleContainer;
+            node.zIndex = -1;
+            this.borderGraphics = node.addComponent(cc.Graphics);
+        }
+
+        const config = BubbleControl.instance.config;
+        const d = config.bubbleSize;
+        const width = config.cols * d;
+        const height = config.rows * d * 0.866 + d;
+
+        this.borderGraphics.clear();
+        this.borderGraphics.strokeColor = cc.Color.WHITE;
+        this.borderGraphics.lineWidth = 8;
+
+        // 计算边界: 基于网格水平居中逻辑 (见 BubbleControl.gridToWorld)
+        const leftEdge = -width / 2;
+        const rightEdge = width / 2 + d / 2;
+        const startY = d / 2;
+
+        // 矩形框住整个潜在区域
+        this.borderGraphics.rect(leftEdge, startY - height, rightEdge - leftEdge, height);
+        this.borderGraphics.stroke();
+
+        // 也可以画出顶部封顶线
+        this.borderGraphics.moveTo(leftEdge, startY);
+        this.borderGraphics.lineTo(rightEdge, startY);
+        this.borderGraphics.stroke();
     }
 
     /**
@@ -326,40 +366,40 @@ export default class UIPlayGroundGameBubble extends cc.Component {
         let currentPos = start.clone();
         let currentDir = direction.clone();
 
-        // 游戏区域边界 (根据配置粗略估算或使用固定值)
-        const wallX = 320; // 假设宽度 640
-        const maxY = 500;
+        const config = BubbleControl.instance.config;
+        const d = config.bubbleSize;
+        const width = config.cols * d;
+
+        // 基于 BubbleContainer 的坐标空间转换
+        const containerWorldPos = this.bubbleContainer.convertToWorldSpaceAR(cc.Vec2.ZERO);
+        const containerLocalPos = this.node.convertToNodeSpaceAR(containerWorldPos);
+
+        const leftWall = containerLocalPos.x - width / 2;
+        const rightWall = containerLocalPos.x + width / 2 + d / 2;
+        const ceilingY = containerLocalPos.y + d / 2;
 
         this.predictionLine.moveTo(currentPos.x, currentPos.y);
 
         for (let i = 0; i < 3; i++) {
-            // 最多折射 3 次
             // 计算与左右墙壁的碰撞
-            let nextX = currentDir.x > 0 ? wallX : -wallX;
+            let nextX = currentDir.x > 0 ? rightWall : leftWall;
             let distToWall = (nextX - currentPos.x) / currentDir.x;
 
-            // 简单处理：如果 distToWall 很大说明几乎垂直
-            if (distToWall < 0) distToWall = 1000;
+            if (distToWall < 0) distToWall = 10000;
 
-            // 假设我们只关心折射
-            let step = Math.min(distToWall, 1000);
+            let step = Math.min(distToWall, 10000);
             let targetPos = currentPos.add(currentDir.mul(step));
 
-            if (targetPos.y > maxY) {
-                // 碰到顶部或足够高了
-                let ratio = (maxY - currentPos.y) / (targetPos.y - currentPos.y);
+            if (targetPos.y > ceilingY) {
+                let ratio = (ceilingY - currentPos.y) / (targetPos.y - currentPos.y);
                 targetPos = currentPos.add(currentDir.mul(step * ratio));
                 this.predictionLine.lineTo(targetPos.x, targetPos.y);
                 break;
             }
 
             this.predictionLine.lineTo(targetPos.x, targetPos.y);
-
-            // 反射
             currentPos = targetPos;
             currentDir.x *= -1;
-
-            if (i === 2) break;
         }
 
         this.predictionLine.stroke();
