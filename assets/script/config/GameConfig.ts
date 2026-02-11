@@ -183,6 +183,72 @@ export const DEFAULT_DOODLE_CONFIG: Readonly<IDoodleConfig> = {
 };
 
 /**
+ * 弹弹球(打砖块)游戏配置接口
+ */
+export interface IBouncyConfig {
+    /** 球半径 */
+    ballRadius: number;
+    /** 球初始速度 (像素/秒) */
+    ballSpeed: number;
+    /** 球最大速度 (像素/秒) */
+    ballMaxSpeed: number;
+    /** 挡板宽度 */
+    paddleWidth: number;
+    /** 挡板高度 */
+    paddleHeight: number;
+    /** 挡板 Y 坐标 (距底部) */
+    paddleY: number;
+    /** 挡板移动速度 (像素/秒, 键盘模式) */
+    paddleSpeed: number;
+    /** 砖块宽度 */
+    brickWidth: number;
+    /** 砖块高度 */
+    brickHeight: number;
+    /** 砖块间距 */
+    brickSpacing: number;
+    /** 砖块矩阵列数 */
+    brickCols: number;
+    /** 砖块区域距顶部偏移 */
+    brickTopOffset: number;
+    /** 游戏区域半宽 */
+    areaHalfWidth: number;
+    /** 游戏区域半高 */
+    areaHalfHeight: number;
+    /** 生命数 */
+    lives: number;
+    /** 普通砖块基础分 */
+    baseScore: number;
+    /** 连击加分倍率 (每次连续消砖 +comboBonus 分) */
+    comboBonus: number;
+    /** 道具掉落概率 (0-1) */
+    powerUpChance: number;
+}
+
+/**
+ * 弹弹球默认配置
+ */
+export const DEFAULT_BOUNCY_CONFIG: Readonly<IBouncyConfig> = {
+    ballRadius: 10,
+    ballSpeed: 500,
+    ballMaxSpeed: 900,
+    paddleWidth: 140,
+    paddleHeight: 18,
+    paddleY: -280,
+    paddleSpeed: 800,
+    brickWidth: 80,
+    brickHeight: 28,
+    brickSpacing: 4,
+    brickCols: 8,
+    brickTopOffset: 120,
+    areaHalfWidth: 370,
+    areaHalfHeight: 310,
+    lives: 3,
+    baseScore: 10,
+    comboBonus: 5,
+    powerUpChance: 0.08,
+};
+
+/**
  * 打地鼠游戏配置接口
  */
 export interface IWhackMoleConfig {

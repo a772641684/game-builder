@@ -1,19 +1,13 @@
-import { BouncyControl } from "../logic/BouncyControl";
-
 const { ccclass, property } = cc._decorator;
 
 /**
- * 弹性球物体组件
+ * 弹弹球物体组件 (旧版物理组件，现已废弃)
+ * 碰撞检测已迁移至 UIPlayGroundGameBouncy 的手动 AABB 碰撞系统
+ *
  * [Prefab 结构说明]
- * - Ball (挂载此脚本, cc.RigidBody, cc.PhysicsCircleCollider, cc.Sprite)
+ * - Ball (挂载此脚本)
  */
 @ccclass
 export default class PrefabGameBouncyBall extends cc.Component {
-    onBeginContact(contact: cc.PhysicsContact, selfCollider: cc.PhysicsCollider, otherCollider: cc.PhysicsCollider) {
-        if (otherCollider.node.name.indexOf("Spike") >= 0) {
-            BouncyControl.getInstance().onGameOver();
-        } else if (otherCollider.node.name.indexOf("Goal") >= 0) {
-            BouncyControl.getInstance().onWin();
-        }
-    }
+    // 此组件已废弃，碰撞逻辑现在由 UIPlayGroundGameBouncy 直接管理
 }
