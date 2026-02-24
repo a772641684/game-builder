@@ -237,13 +237,23 @@ export class LevelGenerator extends Singleton<LevelGenerator> {
 
     /**
      * 生成接通水管(PIPE)关卡
-     * 返回九宫格初始旋转角度 (0, 90, 180, 270)
+     * 返回管道网格初始旋转次数
+     *
+     * 新版管道游戏的关卡生成已由 PipeControl 内部 DFS 算法负责。
+     * 此方法保留向后兼容，返回 rows×cols 个随机旋转次数 (0-3)。
+     *
+     * @param level 关卡号
+     * @param difficulty 难度参数（未使用）
+     * @param rows 行数，默认 3
+     * @param cols 列数，默认 3
+     * @returns 长度为 rows*cols 的旋转次数数组（值 0-3）
      */
-    public generatePipeLayout(level: number, difficulty: number): number[] {
+    public generatePipeLayout(level: number, difficulty: number, rows: number = 3, cols: number = 3): number[] {
         const rng = this.getRandomSource("PIPE", level);
+        const total = rows * cols;
         const layout: number[] = [];
-        for (let i = 0; i < 9; i++) {
-            layout.push(rng.nextInt(0, 3) * 90);
+        for (let i = 0; i < total; i++) {
+            layout.push(rng.nextInt(0, 3));
         }
         return layout;
     }

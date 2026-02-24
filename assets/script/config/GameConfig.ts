@@ -327,6 +327,78 @@ export const DEFAULT_FLOOR_CONFIG: Readonly<IFloorConfig> = {
 };
 
 /**
+ * 水管接通游戏配置接口
+ */
+export interface IPipeConfig {
+    /** 网格行数 */
+    rows: number;
+    /** 网格列数 */
+    cols: number;
+    /** 单元格大小 (像素) */
+    cellSize: number;
+    /** 单元格间距 (像素) */
+    cellSpacing: number;
+    /** 管道线宽 (像素) */
+    pipeLineWidth: number;
+    /** 管道内径 (像素, 水流动画用) */
+    pipeInnerWidth: number;
+    /** 旋转动画时长 (秒) */
+    rotateDuration: number;
+    /** 起点固定位置 — 行索引 (-1=自动随机) */
+    sourceRow: number;
+    /** 起点固定位置 — 列索引 (-1=左边缘) */
+    sourceCol: number;
+    /** 终点固定位置 — 行索引 (-1=自动随机) */
+    targetRow: number;
+    /** 终点固定位置 — 列索引 (-1=右边缘) */
+    targetCol: number;
+    /** 弯管概率 (0-1) */
+    bendChance: number;
+    /** 三通管概率 (0-1) */
+    teeChance: number;
+    /** 十字管概率 (0-1) */
+    crossChance: number;
+    /** 空白格概率 (0-1, 用于增加难度) */
+    emptyChance: number;
+    /** 每步基础得分 */
+    baseScore: number;
+    /** 通关奖励分 */
+    clearBonus: number;
+    /** 步数限制 (0=不限制) */
+    moveLimit: number;
+    /** 水流动画速度 (像素/秒) */
+    flowSpeed: number;
+    /** 是否显示提示线 (连通路径半透明预览) */
+    showHint: boolean;
+}
+
+/**
+ * 水管接通默认配置
+ */
+export const DEFAULT_PIPE_CONFIG: Readonly<IPipeConfig> = {
+    rows: 5,
+    cols: 5,
+    cellSize: 90,
+    cellSpacing: 4,
+    pipeLineWidth: 14,
+    pipeInnerWidth: 8,
+    rotateDuration: 0.2,
+    sourceRow: -1,
+    sourceCol: -1,
+    targetRow: -1,
+    targetCol: -1,
+    bendChance: 0.35,
+    teeChance: 0.15,
+    crossChance: 0.08,
+    emptyChance: 0.0,
+    baseScore: 10,
+    clearBonus: 100,
+    moveLimit: 0,
+    flowSpeed: 300,
+    showHint: false,
+};
+
+/**
  * 打地鼠游戏配置接口
  */
 export interface IWhackMoleConfig {
