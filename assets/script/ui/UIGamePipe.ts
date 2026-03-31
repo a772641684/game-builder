@@ -737,7 +737,7 @@ export default class UIGamePipe extends cc.Component {
         this.scheduleOnce(() => {
             if (this.settlement) {
                 this.settlement.show(true, PipeControl.instance.score, () => {
-                    GameCenter.instance.enterGame("PIPE");
+                    GameCenter.instance.returnToHome();
                 });
             } else {
                 GameCenter.instance.returnToHome();
@@ -778,7 +778,7 @@ export default class UIGamePipe extends cc.Component {
         this.scheduleOnce(() => {
             if (this.settlement) {
                 this.settlement.show(false, PipeControl.instance.score, () => {
-                    GameCenter.instance.enterGame("PIPE");
+                    GameCenter.instance.returnToHome();
                 });
             } else {
                 GameCenter.instance.returnToHome();

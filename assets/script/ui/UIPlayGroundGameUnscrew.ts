@@ -1,5 +1,8 @@
 const { ccclass, property } = cc._decorator;
+import { GameCenter } from "../logic/GameCenter";
+import { Logger } from "../logic/Logger";
 import { UnscrewControl } from "../logic/UnscrewControl";
+import UISettlement from "./UISettlement";
 
 /**
  * 拆螺丝益智游戏主 UI 面板
@@ -7,6 +10,7 @@ import { UnscrewControl } from "../logic/UnscrewControl";
  * - UIPlayGroundGameUnscrew
  *   - TopUI
  *   - GameArea
+ *   - Settlement (挂载 UISettlement, active=false)
  */
 @ccclass
 export default class UIPlayGroundGameUnscrew extends cc.Component {
@@ -23,6 +27,13 @@ export default class UIPlayGroundGameUnscrew extends cc.Component {
      */
     @property(cc.Node)
     protected gameArea: cc.Node = null;
+
+    /**
+     * @description 结算面板
+     * 节点路径: Settlement
+     */
+    @property(UISettlement)
+    settlement: UISettlement = null;
 
     /**
      * 获取指定索引槽位的世界坐标
@@ -45,6 +56,34 @@ export default class UIPlayGroundGameUnscrew extends cc.Component {
     protected start(): void {
         // 初始化游戏逻辑并注册 UI
         UnscrewControl.getInstance().setUI(this);
+    }
+
+    /**
+     * 显示游戏结算界面
+     * 由 UnscrewControl 在胜利/失败时调用
+     * @param isWin 是否胜利
+     * @param score 分数（默认按剩余操作步数计算）
+     */
+    public showGameOver(isWin: boolean, score?: number): void {
+        const finalScore = score != null ? score : 0;
+        Logger.getInstance().info("Unscrew", (isWin ? "胜利" : "失败") + " 得分: " + finalScore);
+
+        if (this.settlement) {
+            this.settlement.show(isWin, finalScore, () => {
+                GameCenter.instance.returnToHome();
+            });
+        } else {
+            this.scheduleOnce(() => {
+                GameCenter.instance.returnToHome();
+            }, 2);
+        }
+    }
+
+    /**
+     * 返回主页按钮
+     */
+    public onBtnBackClicked(): void {
+        GameCenter.instance.returnToHome();
     }
 
     /**

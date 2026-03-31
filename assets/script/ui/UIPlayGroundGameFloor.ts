@@ -978,7 +978,7 @@ export default class UIPlayGroundGameFloor extends cc.Component {
         this.scheduleOnce(() => {
             if (this.settlement) {
                 this.settlement.show(false, ctrl.score, () => {
-                    GameCenter.instance.enterGame("FLOOR");
+                    GameCenter.instance.returnToHome();
                 });
             } else {
                 GameCenter.instance.returnToHome();

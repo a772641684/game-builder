@@ -126,7 +126,10 @@ export class UnscrewControl extends Singleton<UnscrewControl> {
             });
         }
 
-        // 2. TODO: 弹出结算界面
+        // 2. 弹出结算界面
+        if (this.uiNode && typeof this.uiNode.showGameOver === "function") {
+            this.uiNode.showGameOver(true, this.currentLevel ? (this.currentLevel.id + 1) * 100 : 100);
+        }
     }
 
     /**

@@ -67,7 +67,7 @@ export default class UIPlayGroundGamePoly extends cc.Component {
         // 简单示意：如果全都不相交，提示通关
         if (this.settlement) {
             this.settlement.show(true, 100, () => {
-                GameCenter.instance.enterGame("POLY");
+                GameCenter.instance.returnToHome();
             });
         }
     }

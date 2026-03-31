@@ -205,7 +205,7 @@ export default class UIPlayGroundGameMerge extends cc.Component {
             UIManager.instance.openUI(UI_ENUM.SETTLEMENT, UILayer.Popup, false, (node) => {
                 const comp = node.getComponent(UISettlement);
                 if (comp) {
-                    comp.show(true, this._logic.score, () => this.onRestart());
+                    comp.show(true, this._logic.score, () => GameCenter.instance.returnToHome());
                 }
             });
         } else {

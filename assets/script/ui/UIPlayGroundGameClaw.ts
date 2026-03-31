@@ -127,8 +127,8 @@ export default class UIPlayGroundGameClaw extends cc.Component {
 
                     // 演示结算：抓取结束弹窗
                     if (this.settlement) {
-                        this.settlement.show(true, this._score, () => {
-                            Logger.getInstance().info("Claw", "准备新一轮抓取");
+                        this.settlement.show(this._score > 0, this._score, () => {
+                            GameCenter.instance.returnToHome();
                         });
                     }
                 });

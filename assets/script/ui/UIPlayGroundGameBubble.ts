@@ -1083,11 +1083,11 @@ export default class UIPlayGroundGameBubble extends cc.Component {
 
         if (this.settlement) {
             this.settlement.show(isWin, score, () => {
-                this._restart();
+                GameCenter.instance.returnToHome();
             });
         } else {
             this.scheduleOnce(() => {
-                this._restart();
+                GameCenter.instance.returnToHome();
             }, 2);
         }
     }

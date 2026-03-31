@@ -53,6 +53,51 @@ export interface IGameAreaStyle {
     entitySecondary: RGBA;
 }
 
+/**
+ * 纹理包资源路径映射
+ * 所有路径相对于 resources/ 目录，不含扩展名
+ */
+export interface ITexturePackConfig {
+    /** 矩形按钮 (主按钮) */
+    btnRect: string;
+    /** 矩形按钮 (带阴影/depth 版) */
+    btnRectDepth: string;
+    /** 圆角按钮 */
+    btnRound: string;
+    /** 圆角按钮 (带阴影/depth 版) */
+    btnRoundDepth: string;
+    /** 方形按钮 */
+    btnSquare: string;
+    /** 面板/容器底板 */
+    panel: string;
+    /** 分割线 */
+    divider: string;
+    /** 星星 (实心) */
+    star: string;
+    /** 星星 (描边) */
+    starOutline: string;
+    /** 复选框 (选中) */
+    checkColor: string;
+    /** 复选框 (空) */
+    checkGrey: string;
+    /** 滑块条 */
+    slideBar: string;
+    /** 滑块手柄 */
+    slideHandle: string;
+    /** 输入框 */
+    inputRect: string;
+    /** 图标: 对勾 */
+    iconCheck: string;
+    /** 图标: 叉号 */
+    iconCross: string;
+    /** 图标: 播放 */
+    iconPlay: string;
+    /** 图标: 重复/刷新 */
+    iconRepeat: string;
+    /** 图标: 向下箭头 */
+    iconArrowDown: string;
+}
+
 /** 完整主题定义 */
 export interface IUITheme {
     name: string;
@@ -70,6 +115,8 @@ export interface IUITheme {
         comboColor: RGBA;
         hitFlashColor: RGBA;
     };
+    /** 纹理包资源路径映射 (替代 cc.Graphics 绘制 UI) */
+    texturePack: ITexturePackConfig;
 }
 
 // ===================== 预设主题 =====================
@@ -112,6 +159,27 @@ const THEME_CARTOON: IUITheme = {
         comboColor: [255, 100, 100],
         hitFlashColor: [255, 255, 200],
     },
+    texturePack: {
+        btnRect: "ui/kenney/btn_green",
+        btnRectDepth: "ui/kenney/btn_green",
+        btnRound: "ui/kenney/btn_round_green",
+        btnRoundDepth: "ui/kenney/btn_round_green",
+        btnSquare: "ui/kenney/btn_square_blue",
+        panel: "ui/kenney/panel_green",
+        divider: "ui/kenney/divider",
+        star: "ui/kenney/star_yellow",
+        starOutline: "ui/kenney/star_outline",
+        checkColor: "ui/kenney/btn_round_green",
+        checkGrey: "ui/kenney/btn_round_grey",
+        slideBar: "ui/kenney/slide_bar",
+        slideHandle: "ui/kenney/slide_handle",
+        inputRect: "ui/kenney/input_rect",
+        iconCheck: "ui/kenney/star_green",
+        iconCross: "ui/kenney/star_red",
+        iconPlay: "ui/kenney/icon_play",
+        iconRepeat: "ui/kenney/icon_repeat",
+        iconArrowDown: "ui/kenney/icon_arrow_down",
+    },
 };
 
 /** 🌊 清新海洋 */
@@ -151,6 +219,27 @@ const THEME_OCEAN: IUITheme = {
         scorePopColor: [255, 240, 100],
         comboColor: [80, 220, 255],
         hitFlashColor: [200, 240, 255],
+    },
+    texturePack: {
+        btnRect: "ui/kenney/btn_blue",
+        btnRectDepth: "ui/kenney/btn_blue",
+        btnRound: "ui/kenney/btn_round_green",
+        btnRoundDepth: "ui/kenney/btn_round_green",
+        btnSquare: "ui/kenney/btn_square_blue",
+        panel: "ui/kenney/panel_grey",
+        divider: "ui/kenney/divider",
+        star: "ui/kenney/star_blue",
+        starOutline: "ui/kenney/star_outline",
+        checkColor: "ui/kenney/btn_round_green",
+        checkGrey: "ui/kenney/btn_round_grey",
+        slideBar: "ui/kenney/slide_bar",
+        slideHandle: "ui/kenney/slide_handle",
+        inputRect: "ui/kenney/input_rect",
+        iconCheck: "ui/kenney/star_blue",
+        iconCross: "ui/kenney/star_red",
+        iconPlay: "ui/kenney/icon_play",
+        iconRepeat: "ui/kenney/icon_repeat",
+        iconArrowDown: "ui/kenney/icon_arrow_down",
     },
 };
 
@@ -192,6 +281,27 @@ const THEME_NEON: IUITheme = {
         comboColor: [255, 80, 200],
         hitFlashColor: [180, 100, 255],
     },
+    texturePack: {
+        btnRect: "ui/kenney/btn_red",
+        btnRectDepth: "ui/kenney/btn_red",
+        btnRound: "ui/kenney/btn_round_red",
+        btnRoundDepth: "ui/kenney/btn_round_red",
+        btnSquare: "ui/kenney/btn_square_red",
+        panel: "ui/kenney/panel_grey",
+        divider: "ui/kenney/divider",
+        star: "ui/kenney/star_red",
+        starOutline: "ui/kenney/star_outline",
+        checkColor: "ui/kenney/btn_round_red",
+        checkGrey: "ui/kenney/btn_round_grey",
+        slideBar: "ui/kenney/slide_bar",
+        slideHandle: "ui/kenney/slide_handle",
+        inputRect: "ui/kenney/input_rect",
+        iconCheck: "ui/kenney/star_red",
+        iconCross: "ui/kenney/star_red",
+        iconPlay: "ui/kenney/icon_play",
+        iconRepeat: "ui/kenney/icon_repeat",
+        iconArrowDown: "ui/kenney/icon_arrow_down",
+    },
 };
 
 /** 🍬 糖果甜心 */
@@ -231,6 +341,27 @@ const THEME_CANDY: IUITheme = {
         scorePopColor: [255, 230, 100],
         comboColor: [255, 100, 180],
         hitFlashColor: [255, 240, 200],
+    },
+    texturePack: {
+        btnRect: "ui/kenney/btn_yellow",
+        btnRectDepth: "ui/kenney/btn_yellow",
+        btnRound: "ui/kenney/btn_round_green",
+        btnRoundDepth: "ui/kenney/btn_round_green",
+        btnSquare: "ui/kenney/btn_square_blue",
+        panel: "ui/kenney/panel_green",
+        divider: "ui/kenney/divider",
+        star: "ui/kenney/star_yellow",
+        starOutline: "ui/kenney/star_outline",
+        checkColor: "ui/kenney/btn_round_green",
+        checkGrey: "ui/kenney/btn_round_grey",
+        slideBar: "ui/kenney/slide_bar",
+        slideHandle: "ui/kenney/slide_handle",
+        inputRect: "ui/kenney/input_rect",
+        iconCheck: "ui/kenney/star_green",
+        iconCross: "ui/kenney/star_red",
+        iconPlay: "ui/kenney/icon_play",
+        iconRepeat: "ui/kenney/icon_repeat",
+        iconArrowDown: "ui/kenney/icon_arrow_down",
     },
 };
 

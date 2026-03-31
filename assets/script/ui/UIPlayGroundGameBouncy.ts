@@ -453,7 +453,7 @@ export default class UIPlayGroundGameBouncy extends cc.Component {
             this.scheduleOnce(function () {
                 if (this.settlement) {
                     this.settlement.show(false, BouncyControl.instance.score, function () {
-                        GameCenter.instance.enterGame("BOUNCY");
+                        GameCenter.instance.returnToHome();
                     });
                 } else {
                     GameCenter.instance.returnToHome();
@@ -639,7 +639,7 @@ export default class UIPlayGroundGameBouncy extends cc.Component {
                 this.scheduleOnce(function () {
                     if (this.settlement) {
                         this.settlement.show(true, BouncyControl.instance.score, function () {
-                            GameCenter.instance.enterGame("BOUNCY");
+                            GameCenter.instance.returnToHome();
                         });
                     }
                 }, 0.5);

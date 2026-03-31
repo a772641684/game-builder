@@ -86,6 +86,7 @@ export class UIGraphicsHelper {
 
     /**
      * 绘制渐变矩形背景 (上下两色, 用多条横线模拟)
+     * @deprecated 请使用 UITextureHelper.createGradientBg 替代
      */
     static fillGradientRect(
         g: cc.Graphics,
@@ -110,6 +111,7 @@ export class UIGraphicsHelper {
 
     /**
      * 绘制 HUD 面板 (圆角 + 半透明底色 + 可选描边)
+     * @deprecated 请使用 UITextureHelper.createPanel 替代
      */
     static drawHudPanel(g: cc.Graphics, w: number, h: number, bgColor: RGBA, radius: number, borderColor?: RGBA): void {
         g.clear();
@@ -125,6 +127,7 @@ export class UIGraphicsHelper {
 
     /**
      * 绘制按钮 (圆角矩形 + 底部阴影)
+     * @deprecated 请使用 UITextureHelper.createButton 替代
      */
     static drawButton(
         g: cc.Graphics,

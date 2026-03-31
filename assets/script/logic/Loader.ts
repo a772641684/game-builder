@@ -49,6 +49,60 @@ export class Loader extends Singleton<Loader> {
     }
 
     /**
+     * 批量加载资源
+     * @param paths 资源路径数组
+     * @param type 资源类型
+     * @param onProgress 单个加载完成回调（可选）
+     * @param onComplete 全部加载完成回调
+     */
+    public loadBatch<T extends cc.Asset>(
+        paths: string[],
+        type: typeof cc.Asset,
+        onComplete: (results: Map<string, T>) => void,
+        onProgress?: (loaded: number, total: number) => void
+    ): void {
+        const results: Map<string, T> = new Map();
+        if (!paths || paths.length === 0) {
+            onComplete(results);
+            return;
+        }
+
+        let loaded = 0;
+        const total = paths.length;
+
+        for (let i = 0; i < total; i++) {
+            const resPath = paths[i];
+            this.load<T>(resPath, type, (err: Error, res: T) => {
+                if (!err && res) {
+                    results.set(resPath, res);
+                } else {
+                    Logger.getInstance().warn("Loader", `批量加载失败: ${resPath}`);
+                }
+                loaded++;
+                if (onProgress) {
+                    onProgress(loaded, total);
+                }
+                if (loaded >= total) {
+                    Logger.getInstance().info("Loader", `批量加载完成 (${results.size}/${total})`);
+                    onComplete(results);
+                }
+            });
+        }
+    }
+
+    /**
+     * 获取已缓存的资源（不触发加载）
+     * @param path 资源路径
+     * @returns 已缓存的资源，未找到返回 null
+     */
+    public getCached<T extends cc.Asset>(path: string): T {
+        if (this._loadedRes.has(path)) {
+            return this._loadedRes.get(path) as T;
+        }
+        return null;
+    }
+
+    /**
      * 释放资源
      * @param path 路径
      */

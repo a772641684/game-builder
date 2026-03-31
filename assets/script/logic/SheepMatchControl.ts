@@ -1,5 +1,6 @@
 import { Singleton } from "../../ace/logic/Singleton";
 import { UI_ENUM } from "../enums/UIEnum";
+import { GameCenter } from "./GameCenter";
 import { Logger } from "./Logger";
 import { IMatchCommand, ISheepMatchLevel, ISlotItem } from "./MatchDataTransfer";
 import { StorageControl } from "./StorageControl";
@@ -135,6 +136,7 @@ export class SheepMatchControl extends Singleton<SheepMatchControl> {
         const firstEmptyIndex = this.slots.indexOf(null);
         if (firstEmptyIndex === -1) {
             Logger.getInstance().error("Match", "槽位已满，游戏失败");
+            this.showSettlement(false);
             return;
         }
 
@@ -229,7 +231,6 @@ export class SheepMatchControl extends Singleton<SheepMatchControl> {
             );
 
             this.showSettlement(true);
-            this.showSettlement(false);
         }
     }
 
@@ -242,10 +243,7 @@ export class SheepMatchControl extends Singleton<SheepMatchControl> {
             if (settlement) {
                 // 分数计算：消除数 * 10 (基础分)
                 settlement.show(isWin, this.totalEliminated * 10, () => {
-                    // 重新开始：重新加载当前关卡
-                    if (this.currentLevel) {
-                        this.loadLevel(this.currentLevel);
-                    }
+                    GameCenter.instance.returnToHome();
                 });
             }
         });

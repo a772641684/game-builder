@@ -651,11 +651,7 @@ export default class UIPlayGroundGameWhackMole extends cc.Component {
 
         if (this.settlement) {
             this.settlement.show(summary.score > 0, summary.score, () => {
-                // 重新开始
-                this._holeComponents.forEach((h) => {
-                    if (h && h.node.isValid) h.hideMole(false);
-                });
-                this._startGame();
+                GameCenter.instance.returnToHome();
             });
         } else {
             // 没有结算面板则直接返回

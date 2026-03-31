@@ -749,7 +749,7 @@ export default class UIPlayGroundGameDoodle extends cc.Component {
         this.scheduleOnce(function () {
             if (this.settlement) {
                 this.settlement.show(false, DoodleControl.instance.score, function () {
-                    GameCenter.instance.enterGame("DOODLE");
+                    GameCenter.instance.returnToHome();
                 });
             } else {
                 GameCenter.instance.returnToHome();
